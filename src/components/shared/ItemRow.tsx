@@ -36,7 +36,7 @@ export default function ItemRow({
   const [editTitle, setEditTitle] = useState(item.title);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isCompleted = !!item.completed_at;
+  const isCompleted = item.completed;
   const isOverdue =
     !isCompleted && item.due_date && isPast(startOfDay(new Date(item.due_date))) && !isToday(new Date(item.due_date));
   const isDueToday = item.due_date && isToday(new Date(item.due_date));

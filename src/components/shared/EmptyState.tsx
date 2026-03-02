@@ -1,43 +1,36 @@
 // components/shared/EmptyState.tsx
-// Empty state com mensagem customizável
-
-
 
 interface EmptyStateProps {
-  message?: string;
-  submessage?: string;
+  icon?: string;
+  title?: string;
+  description?: string;
+  message?: string;       // alias for title
+  submessage?: string;    // alias for description
 }
 
-export default function EmptyState({
-  message = 'Nada aqui ainda',
-  submessage = 'Use o input acima para adicionar algo',
+export function EmptyState({
+  icon,
+  title,
+  description,
+  message,
+  submessage,
 }: EmptyStateProps) {
+  const displayTitle = title || message || 'Nada aqui ainda';
+  const displayDesc = description || submessage || 'Use o input acima para adicionar algo';
+
   return (
-    <div
-      className="flex flex-col items-center justify-center"
-      style={{ padding: '48px 24px', gap: '8px' }}
-    >
-      <span
-        style={{
-          fontFamily: '"Cormorant Garamond", serif',
-          fontSize: '20px',
-          fontWeight: 300,
-          color: '#a8947840',
-          letterSpacing: '-0.02em',
-        }}
-      >
-        {message}
+    <div className="flex flex-col items-center justify-center py-12 px-6 gap-2">
+      {icon && (
+        <span className="text-2xl text-muted/30 mb-1">{icon}</span>
+      )}
+      <span className="font-serif text-xl font-light text-muted/30 tracking-tight">
+        {displayTitle}
       </span>
-      <span
-        style={{
-          fontFamily: 'Inter, sans-serif',
-          fontSize: '12px',
-          fontWeight: 400,
-          color: '#a8947825',
-        }}
-      >
-        {submessage}
+      <span className="font-sans text-xs text-muted/20">
+        {displayDesc}
       </span>
     </div>
   );
 }
+
+export default EmptyState;

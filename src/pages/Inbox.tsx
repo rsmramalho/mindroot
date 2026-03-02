@@ -1,42 +1,39 @@
-// pages/Inbox.tsx
-// Inbox: itens sem módulo — classificar, priorizar, arquivar, promover pra hoje
-// Fase 1: InboxActions por item
-
+// pages/Inbox.tsx — Classificar itens sem módulo
 import { useState, useMemo } from 'react';
-import { useItems } from '../hooks/useItems';
-import { useItemMutations } from '../hooks/useItemMutations';
-import { getInboxItems, sortItems } from '../engine/dashboard-filters';
-import ItemRow from '../components/shared/ItemRow';
-import InboxActions from '../components/inbox/InboxActions';
-import EmptyState from '../components/shared/EmptyState';
+import { useItems } from '@/hooks/useItems';
+import { useItemMutations } from '@/hooks/useItemMutations';
+import type { ItemModule, ItemPriority } from '@/types/item';
+import { sortItems } from '@/engine/dashboard-filters';
+import ItemRow from '@/components/shared/ItemRow';
+import InboxActions from '@/components/inbox/InboxActions';
+import EmptyState from '@/components/shared/EmptyState';
 import { startOfDay, formatISO } from 'date-fns';
 
-export default function Inbox() {
-  const { data: items = [], isLoading } = useItems();
+export function InboxPage() {
+  const { inboxItems: rawInbox, isLoading } = useItems();
   const { updateMutation, completeMutation, deleteMutation } = useItemMutations();
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const inboxItems = useMemo(
-    () => sortItems(getInboxItems(items), 'created_at', 'desc'),
-    [items]
+    () => sortItems(rawInbox, 'created_at', 'desc'),
+    [rawInbox]
   );
 
   const handleSetModule = (id: string, module: string) => {
-    updateMutation.mutate({ id, updates: { module } });
+    updateMutation.mutate({ id, updates: { module: module as ItemModule } });
     setSelectedId(null);
   };
 
   const handleSetPriority = (id: string, priority: string) => {
-    updateMutation.mutate({ id, updates: { priority } });
+    updateMutation.mutate({ id, updates: { priority: priority as ItemPriority } });
   };
 
   const handleArchive = (id: string) => {
-    updateMutation.mutate({ id, updates: { status: 'archived' } });
+    updateMutation.mutate({ id, updates: { archived: true } });
     setSelectedId(null);
   };
 
   const handlePromote = (id: string) => {
-    // Promover = definir due_date pra hoje
     updateMutation.mutate({
       id,
       updates: { due_date: formatISO(startOfDay(new Date())) },
@@ -56,15 +53,8 @@ export default function Inbox() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center" style={{ minHeight: '60vh' }}>
-        <span
-          style={{
-            fontFamily: '"Cormorant Garamond", serif',
-            fontSize: '18px',
-            color: '#a8947840',
-            fontWeight: 300,
-          }}
-        >
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <span className="font-serif text-lg text-muted/40 font-light animate-pulse">
           carregando...
         </span>
       </div>
@@ -72,40 +62,20 @@ export default function Inbox() {
   }
 
   return (
-    <div className="flex flex-col gap-2" style={{ padding: '0 4px' }}>
-      {/* Header */}
-      <div className="flex items-center justify-between" style={{ padding: '0 4px 8px' }}>
-        <h2
-          style={{
-            fontFamily: '"Cormorant Garamond", serif',
-            fontSize: '22px',
-            fontWeight: 300,
-            color: '#e8e0d4',
-            letterSpacing: '-0.02em',
-          }}
-        >
+    <div className="flex flex-col gap-2 px-1">
+      <div className="flex items-center justify-between px-1 pb-2">
+        <h2 className="font-serif text-xl font-light text-light tracking-tight">
           Inbox
         </h2>
-        <span
-          style={{
-            fontFamily: '"JetBrains Mono", monospace',
-            fontSize: '12px',
-            color: '#a8947860',
-          }}
-        >
+        <span className="font-mono text-xs text-muted/40">
           {inboxItems.length}
         </span>
       </div>
 
-      {/* Empty */}
       {inboxItems.length === 0 && (
-        <EmptyState
-          message="Inbox vazio"
-          submessage="Itens sem módulo aparecem aqui"
-        />
+        <EmptyState message="Inbox vazio" submessage="Itens sem módulo aparecem aqui" />
       )}
 
-      {/* Items */}
       {inboxItems.map((item) => (
         <div key={item.id}>
           <div
@@ -120,9 +90,8 @@ export default function Inbox() {
             />
           </div>
 
-          {/* Actions expanded */}
           {selectedId === item.id && (
-            <div style={{ padding: '0 8px 8px 40px' }}>
+            <div className="pl-10 pr-2 pb-2">
               <InboxActions
                 itemId={item.id}
                 currentModule={item.module}

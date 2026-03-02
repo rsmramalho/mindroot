@@ -1,19 +1,57 @@
 // engine/soul.ts — Soul Engine
 // Check-in triggers, contextual prompts, emotional shift detection
+// Fase 2: expanded triggers (chore, emotion_before, ritual)
 
 import type { AtomItem, Emotion } from '@/types/item';
 import type { CheckInTrigger } from '@/types/engine';
 import { POSITIVE_EMOTIONS, CHALLENGING_EMOTIONS } from '@/types/item';
 
 // ─── Check-in trigger logic ─────────────────────────────────
+// Triggers quando:
+// 1. needs_checkin explícito
+// 2. is_chore (sempre reconhece trabalho invisível)
+// 3. tem emotion_before (verifica shift)
+// 4. type === 'ritual'
 
 export function shouldTriggerCheckIn(item: AtomItem): CheckInTrigger | null {
+  if (!item.completed) return null;
+
   // Rule 1: explicit needs_checkin
-  if (item.needs_checkin && item.completed) {
+  if (item.needs_checkin) {
     return {
       item_id: item.id,
       reason: item.is_chore ? 'chore_complete' : 'task_complete',
       emotion_before: item.emotion_before,
+      prompt: generatePrompt(item),
+    };
+  }
+
+  // Rule 2: chores always get recognized
+  if (item.is_chore) {
+    return {
+      item_id: item.id,
+      reason: 'chore_complete',
+      emotion_before: item.emotion_before,
+      prompt: generatePrompt(item),
+    };
+  }
+
+  // Rule 3: has emotion_before — check for shift
+  if (item.emotion_before) {
+    return {
+      item_id: item.id,
+      reason: 'task_complete',
+      emotion_before: item.emotion_before,
+      prompt: generatePrompt(item),
+    };
+  }
+
+  // Rule 4: ritual tasks
+  if (item.type === 'ritual') {
+    return {
+      item_id: item.id,
+      reason: 'task_complete',
+      emotion_before: null,
       prompt: generatePrompt(item),
     };
   }
@@ -31,15 +69,22 @@ function generatePrompt(item: AtomItem): string {
     return 'Trabalho invisível reconhecido. Como você se sente depois?';
   }
 
-  // Had emotion before — check for shift
-  if (emotion_before) {
-    if (CHALLENGING_EMOTIONS.includes(emotion_before)) {
-      return `Você estava ${emotion_before} antes. Como se sente agora?`;
-    }
+  // Had challenging emotion before
+  if (emotion_before && CHALLENGING_EMOTIONS.includes(emotion_before)) {
+    return `Você estava ${emotion_before} antes. Como se sente agora?`;
+  }
+
+  // Had positive emotion before
+  if (emotion_before && POSITIVE_EMOTIONS.includes(emotion_before)) {
     return `Começou ${emotion_before}. Algo mudou?`;
   }
 
-  // Type-specific
+  // Had neutral emotion
+  if (emotion_before) {
+    return `Estava ${emotion_before}. E agora?`;
+  }
+
+  // Ritual
   if (type === 'ritual') {
     return 'Como foi esse momento de ritual?';
   }

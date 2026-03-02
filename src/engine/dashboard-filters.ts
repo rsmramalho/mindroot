@@ -72,10 +72,10 @@ const PRIORITY_LABELS: Record<string, string> = {
 export function filterItems(items: AtomItem[], filters: DashboardFilters): AtomItem[] {
   return items.filter((item) => {
     // Completed
-    if (!filters.showCompleted && item.completed_at) return false;
+    if (!filters.showCompleted && item.completed) return false;
 
     // Archived
-    if (!filters.showArchived && item.status === 'archived') return false;
+    if (!filters.showArchived && item.archived) return false;
 
     // Module
     if (filters.module && item.module !== filters.module) return false;
@@ -222,7 +222,7 @@ function getGroupLabel(key: string, groupBy: GroupBy): string {
 
 export function getOverdueItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed_at || item.status === 'archived') return false;
+    if (item.completed || item.archived) return false;
     if (!item.due_date) return false;
     const due = new Date(item.due_date);
     return isPast(startOfDay(due)) && !isToday(due);
@@ -231,7 +231,7 @@ export function getOverdueItems(items: AtomItem[]): AtomItem[] {
 
 export function getTodayItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed_at || item.status === 'archived') return false;
+    if (item.completed || item.archived) return false;
     if (!item.due_date) return false;
     return isToday(new Date(item.due_date));
   });
@@ -239,21 +239,21 @@ export function getTodayItems(items: AtomItem[]): AtomItem[] {
 
 export function getFocusItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed_at || item.status === 'archived') return false;
+    if (item.completed || item.archived) return false;
     return item.priority === 'urgente' || item.priority === 'importante';
   });
 }
 
 export function getInboxItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed_at || item.status === 'archived') return false;
+    if (item.completed || item.archived) return false;
     return !item.module;
   });
 }
 
 export function getChoreItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed_at || item.status === 'archived') return false;
+    if (item.completed || item.archived) return false;
     return item.is_chore;
   });
 }

@@ -36,7 +36,7 @@ export default function DashboardView({
 }: DashboardViewProps) {
   // Filtrar apenas ativos (não completados, não arquivados)
   const activeItems = useMemo(
-    () => items.filter((i) => !i.completed_at && i.status !== 'archived'),
+    () => items.filter((i) => !i.completed && !i.archived),
     [items]
   );
 
