@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 import type { ParsedInput } from '@/types/engine';
 import type { ItemType, ItemModule, ItemPriority, Emotion, RitualPeriod } from '@/types/item';
 
-interface AIParsedResult {
+export interface AIParsedResult {
   title: string;
   type: ItemType;
   module: ItemModule | null;
