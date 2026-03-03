@@ -1,7 +1,7 @@
 // types/ui.ts — UI state types
 import type { ItemModule, ItemPriority, ItemType, RitualPeriod } from './item';
 
-export type AppPage = 'home' | 'inbox' | 'projects' | 'project-detail' | 'ritual' | 'journal' | 'calendar';
+export type AppPage = 'home' | 'inbox' | 'projects' | 'project-detail' | 'ritual' | 'journal' | 'calendar' | 'analytics';
 
 export interface AppFilters {
   module: ItemModule | null;

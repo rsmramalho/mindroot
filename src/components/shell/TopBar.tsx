@@ -1,7 +1,11 @@
-// components/shell/TopBar.tsx — Período + greeting
+// components/shell/TopBar.tsx — Período + greeting + settings
 import { useRitualStore } from '@/store/ritual-store';
 
-export function TopBar() {
+interface TopBarProps {
+  onOpenSettings?: () => void;
+}
+
+export function TopBar({ onOpenSettings }: TopBarProps) {
   const { periodGreeting, currentPeriod, periodColor } = useRitualStore();
 
   return (
@@ -16,6 +20,29 @@ export function TopBar() {
             {periodGreeting} — {currentPeriod}
           </p>
         </div>
+        <button
+          onClick={onOpenSettings}
+          className="flex items-center justify-center transition-colors hover:opacity-80"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: '8px',
+            backgroundColor: '#a8947808',
+            border: '1px solid #a8947812',
+          }}
+          title="Ajustes"
+        >
+          <span
+            style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '14px',
+              color: '#a8947860',
+              lineHeight: 1,
+            }}
+          >
+            ≡
+          </span>
+        </button>
       </div>
     </header>
   );

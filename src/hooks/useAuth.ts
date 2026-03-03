@@ -38,5 +38,9 @@ export function useAuth() {
     setUser(null);
   };
 
-  return { user, loading, signIn, signUp, signOut };
+  const signInWithGoogle = async () => {
+    await authService.signInWithGoogle();
+  };
+
+  return { user, loading, signIn, signUp, signOut, signInWithGoogle };
 }

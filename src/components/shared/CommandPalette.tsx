@@ -70,6 +70,7 @@ export default function CommandPalette() {
       { id: 'nav-inbox', label: 'Inbox', category: 'navegacao', icon: '▤', action: () => navigateTo('inbox'), keywords: 'inbox caixa entrada classificar' },
       { id: 'nav-ritual', label: 'Ritual', category: 'navegacao', icon: '◎', action: () => navigateTo('ritual'), keywords: 'ritual aurora zenite crepusculo' },
       { id: 'nav-journal', label: 'Journal', category: 'navegacao', icon: '○', action: () => navigateTo('journal'), keywords: 'journal diario reflexao' },
+      { id: 'nav-analytics', label: 'Analytics', category: 'navegacao', icon: '◈', action: () => navigateTo('analytics'), keywords: 'analytics estatisticas tendencias emocao grafico' },
     ];
 
     // Item search results

@@ -1,4 +1,5 @@
 // App.tsx — Router + Providers (< 80 linhas)
+import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppStore } from '@/store/app-store';
@@ -12,9 +13,11 @@ import { ProjectsPage } from '@/pages/Projects';
 import { CalendarPage } from '@/pages/Calendar';
 import { RitualPage } from '@/pages/Ritual';
 import { JournalPage } from '@/pages/Journal';
+import { AnalyticsPage } from '@/pages/Analytics';
 
 // Global components
 import CommandPalette from '@/components/shared/CommandPalette';
+import SettingsDrawer from '@/components/settings/SettingsDrawer';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,16 +45,21 @@ function PageRouter() {
       return <RitualPage />;
     case 'journal':
       return <JournalPage />;
+    case 'analytics':
+      return <AnalyticsPage />;
     default:
       return <HomePage />;
   }
 }
 
 function AuthenticatedApp() {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   return (
-    <AppShell>
+    <AppShell onOpenSettings={() => setSettingsOpen(true)}>
       <PageRouter />
       <CommandPalette />
+      <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </AppShell>
   );
 }

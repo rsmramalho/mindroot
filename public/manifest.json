@@ -1,0 +1,19 @@
+{
+  "name": "MindRoot",
+  "short_name": "MindRoot",
+  "description": "Produtividade emocional — Emoção + Ação + Tempo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111318",
+  "theme_color": "#111318",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "lifestyle"]
+}
