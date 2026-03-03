@@ -3,7 +3,7 @@
 // Aparece no topo do Dashboard quando há overdue
 
 
-import type { AtomItem } from '../../types/item';
+import type { AtomItem } from '@/types/item';
 
 interface OverdueAlertProps {
   items: AtomItem[];

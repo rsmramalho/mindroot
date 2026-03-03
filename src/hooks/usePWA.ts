@@ -17,7 +17,7 @@ export function usePWA() {
       navigator.serviceWorker
         .register('/sw.js')
         .then(() => setSwRegistered(true))
-        .catch((err) => console.warn('SW registration failed:', err));
+        .catch(() => { /* SW registration failed — silent in production */ });
     }
   }, []);
 

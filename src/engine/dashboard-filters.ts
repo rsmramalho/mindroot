@@ -2,7 +2,7 @@
 // Engine de filtros avançados — lógica pura, sem React
 // Filtra e agrupa AtomItems para o Dashboard
 
-import type { AtomItem } from '../types/item';
+import type { AtomItem } from '@/types/item';
 import { isToday, isPast, isFuture, startOfDay, isThisWeek } from 'date-fns';
 
 // ━━━ Types ━━━

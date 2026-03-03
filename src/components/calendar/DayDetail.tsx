@@ -15,7 +15,7 @@ interface DayDetailProps {
   onUncomplete: (id: string) => void;
   onDelete: (id: string) => void;
   onArchive: (id: string) => void;
-  onEdit: (id: string, updates: Record<string, unknown>) => void;
+  onEdit: (id: string, updates: Partial<AtomItem>) => void;
 }
 
 export default function DayDetail({

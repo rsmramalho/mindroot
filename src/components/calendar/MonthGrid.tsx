@@ -13,7 +13,6 @@ import {
   isSameDay,
   isToday,
 } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import type { AtomItem } from '@/types/item';
 
 interface MonthGridProps {

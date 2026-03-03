@@ -4,6 +4,7 @@
 import { useItems } from '@/hooks/useItems';
 import { useItemMutations } from '@/hooks/useItemMutations';
 import { useSoul } from '@/hooks/useSoul';
+import type { AtomItem } from '@/types/item';
 import DashboardView from '@/components/dashboard/DashboardView';
 import { AtomInput } from '@/components/input/AtomInput';
 import CheckInPrompt from '@/components/soul/CheckInPrompt';
@@ -31,7 +32,7 @@ export function HomePage() {
     updateMutation.mutate({ id, updates: { archived: true } });
   };
 
-  const handleEdit = (id: string, updates: Record<string, unknown>) => {
+  const handleEdit = (id: string, updates: Partial<AtomItem>) => {
     updateMutation.mutate({ id, updates });
   };
 

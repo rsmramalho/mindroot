@@ -1,6 +1,7 @@
 // pages/Calendar.tsx — Calendar view with month grid
 import { useItems } from '@/hooks/useItems';
 import { useItemMutations } from '@/hooks/useItemMutations';
+import type { AtomItem } from '@/types/item';
 import CalendarView from '@/components/calendar/CalendarView';
 
 export function CalendarPage() {
@@ -14,7 +15,7 @@ export function CalendarPage() {
   const handleArchive = (id: string) => {
     updateMutation.mutate({ id, updates: { archived: true } });
   };
-  const handleEdit = (id: string, updates: Record<string, unknown>) => {
+  const handleEdit = (id: string, updates: Partial<AtomItem>) => {
     updateMutation.mutate({ id, updates });
   };
 

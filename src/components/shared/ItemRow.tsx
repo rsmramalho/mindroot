@@ -8,7 +8,7 @@ import { ptBR } from 'date-fns/locale';
 import ModuleBadge from './ModuleBadge';
 import PriorityDot from './PriorityDot';
 import TagChip from './TagChip';
-import type { AtomItem } from '../../types/item';
+import type { AtomItem } from '@/types/item';
 
 interface ItemRowProps {
   item: AtomItem;

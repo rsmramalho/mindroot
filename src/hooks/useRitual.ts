@@ -49,7 +49,7 @@ export function useRitual() {
   const isPeriodComplete = periodProgress.total > 0 && periodProgress.done === periodProgress.total;
 
   // Current period config
-  const periodConfig = useMemo(() => getCurrentPeriod(), []);
+  const periodConfig = useMemo(() => getCurrentPeriod(), [currentPeriod]);
 
   // Period prompt
   const periodPrompt = useMemo(

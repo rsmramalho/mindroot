@@ -1,7 +1,7 @@
 // hooks/useAnalytics.ts — Derived analytics from items
 import { useMemo } from 'react';
 import { useItems } from '@/hooks/useItems';
-import type { AtomItem, Emotion, ItemModule } from '@/types/item';
+import type { Emotion, ItemModule } from '@/types/item';
 import { POSITIVE_EMOTIONS } from '@/types/item';
 import {
   format,

@@ -3,9 +3,9 @@
 // Visual destacado, tipografia Cormorant
 
 
-import type { AtomItem } from '../../types/item';
-import PriorityDot from '../shared/PriorityDot';
-import ModuleBadge from '../shared/ModuleBadge';
+import type { AtomItem } from '@/types/item';
+import PriorityDot from '@/components/shared/PriorityDot';
+import ModuleBadge from '@/components/shared/ModuleBadge';
 
 interface FocusBlockProps {
   items: AtomItem[];

@@ -2,7 +2,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { itemService } from '@/service/item-service';
 import { useAppStore } from '@/store/app-store';
-import type { AtomItem } from '@/types/item';
 import { useMemo } from 'react';
 import { isToday, parseISO } from 'date-fns';
 

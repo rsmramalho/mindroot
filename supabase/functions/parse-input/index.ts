@@ -4,7 +4,7 @@
 
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
 
-const SYSTEM_PROMPT = `You are MindRoot's input parser. Given a Portuguese text input, extract structured data.
+const SYSTEM_PROMPT_TEMPLATE = `You are MindRoot's input parser. Given a Portuguese text input, extract structured data.
 
 Return ONLY valid JSON with these fields:
 {
@@ -30,7 +30,7 @@ Examples:
 - "lavar roupa" → type:chore, is_chore:true, module:null
 - "refletir sobre minha semana" → type:journal, module:soul
 
-Today is: ${new Date().toISOString().slice(0, 10)}.
+Today is: {{TODAY}}.
 Return ONLY JSON, no markdown, no backticks.`;
 
 const corsHeaders = {
@@ -64,6 +64,9 @@ Deno.serve(async (req: Request) => {
 
     console.log('Parsing input:', input);
 
+    const today = new Date().toISOString().slice(0, 10);
+    const systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace('{{TODAY}}', today);
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -74,7 +77,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({
         model: 'claude-3-haiku-20240307',
         max_tokens: 512,
-        system: SYSTEM_PROMPT,
+        system: systemPrompt,
         messages: [{ role: 'user', content: input }],
       }),
     });

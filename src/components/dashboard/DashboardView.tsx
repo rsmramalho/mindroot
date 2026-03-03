@@ -3,7 +3,7 @@
 // Seções: Overdue → Focus → Hoje → Por Módulo → Ativo (sem data)
 
 import { useMemo } from 'react';
-import type { AtomItem } from '../../types/item';
+import type { AtomItem } from '@/types/item';
 import {
   getOverdueItems,
   getTodayItems,
@@ -11,11 +11,11 @@ import {
   groupItems,
   sortItems,
   MODULE_COLORS,
-} from '../../engine/dashboard-filters';
+} from '@/engine/dashboard-filters';
 import OverdueAlert from './OverdueAlert';
 import FocusBlock from './FocusBlock';
-import ItemRow from '../shared/ItemRow';
-import EmptyState from '../shared/EmptyState';
+import ItemRow from '@/components/shared/ItemRow';
+import EmptyState from '@/components/shared/EmptyState';
 
 interface DashboardViewProps {
   items: AtomItem[];

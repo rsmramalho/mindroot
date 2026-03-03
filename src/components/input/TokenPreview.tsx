@@ -28,13 +28,13 @@ export function TokenPreview({ tokens }: TokenPreviewProps) {
             TOKEN_COLORS[token.type] || 'text-muted'
           }`}
         >
-          {token.type === 'module' && `📁 ${token.value}`}
-          {token.type === 'priority' && `⚡ ${token.value}`}
-          {token.type === 'emotion_before' && `💭 ${token.value}`}
+          {token.type === 'module' && `◇ ${token.value}`}
+          {token.type === 'priority' && `● ${token.value}`}
+          {token.type === 'emotion_before' && `○ ${token.value}`}
           {token.type === 'emotion_after' && `✦ ${token.value}`}
-          {token.type === 'temporal' && `⏰ ${token.value}`}
-          {token.type === 'chore' && '🏠 chore'}
-          {token.type === 'needs_checkin' && '🔔 check-in'}
+          {token.type === 'temporal' && `▸ ${token.value}`}
+          {token.type === 'chore' && '◆ chore'}
+          {token.type === 'needs_checkin' && '◎ check-in'}
           {token.type === 'type' && `▸ ${token.value}`}
           {!['module', 'priority', 'emotion_before', 'emotion_after', 'temporal', 'chore', 'needs_checkin', 'type'].includes(token.type) && token.raw}
         </span>

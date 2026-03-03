@@ -3,8 +3,8 @@
 // Aparece ao selecionar um item no Inbox
 
 import { useState } from 'react';
-import { MODULE_CONFIG } from '../shared/ModuleBadge';
-import { PRIORITY_CONFIG } from '../shared/PriorityDot';
+import { MODULE_CONFIG } from '@/components/shared/ModuleBadge';
+import { PRIORITY_CONFIG } from '@/components/shared/PriorityDot';
 
 type ActionMode = 'idle' | 'module' | 'priority';
 

@@ -44,7 +44,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
   const handleArchive = (id: string) => {
     updateMutation.mutate({ id, updates: { archived: true } });
   };
-  const handleEdit = (id: string, updates: Record<string, unknown>) => {
+  const handleEdit = (id: string, updates: Partial<AtomItem>) => {
     updateMutation.mutate({ id, updates });
   };
 
