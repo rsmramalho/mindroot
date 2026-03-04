@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { LogoFull } from '@/components/shared/Logo';
 
 export function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -37,11 +38,14 @@ export function AuthPage() {
       transition={{ duration: 0.5, ease: 'easeOut' }}
     >
       {/* Logo */}
-      <div className="mb-10 text-center">
-        <h1 className="font-serif text-4xl font-bold text-light tracking-wider">
-          MindRoot
-        </h1>
-        <p className="font-sans text-xs text-muted mt-2 tracking-widest uppercase">
+      <div className="mb-10 text-center flex flex-col items-center">
+        <LogoFull
+          iconSize={28}
+          wordmarkSize="lg"
+          variant="duo"
+          layout="vertical"
+        />
+        <p className="font-sans text-xs text-muted mt-3 tracking-widest uppercase">
           Emoção + Ação + Tempo
         </p>
       </div>

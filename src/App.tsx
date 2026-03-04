@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppStore } from '@/store/app-store';
 import { AppShell } from '@/components/shell/AppShell';
+import { LogoFull } from '@/components/shared/Logo';
 
 // Pages
 import { AuthPage } from '@/pages/Auth';
@@ -87,9 +88,20 @@ function AppContent() {
   if (loading) {
     return (
       <div className="min-h-dvh flex items-center justify-center bg-bg">
-        <div className="text-center">
-          <h1 className="font-serif text-2xl text-light animate-pulse">MindRoot</h1>
-          <div className="mt-4 flex justify-center gap-1.5">
+        <div className="text-center flex flex-col items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <LogoFull
+              iconSize={24}
+              wordmarkSize="lg"
+              variant="duo"
+              layout="vertical"
+            />
+          </motion.div>
+          <div className="mt-6 flex justify-center gap-1.5">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}

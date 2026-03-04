@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0f0e0c"/>
+
+  <!-- Subtle grid texture -->
+  <line x1="0" y1="315" x2="1200" y2="315" stroke="#a89478" stroke-width="0.5" opacity="0.03"/>
+  <line x1="600" y1="0" x2="600" y2="630" stroke="#a89478" stroke-width="0.5" opacity="0.03"/>
+
+  <!-- Tree mark — centered, larger -->
+  <g transform="translate(600, 220)">
+    <!-- Branches -->
+    <path d="M0 0 C-12 -28, -32 -48, -52 -68" stroke="#b8a088" stroke-width="2" opacity="0.5" stroke-linecap="round" fill="none"/>
+    <path d="M0 0 C-2 -30, -4 -50, 0 -72" stroke="#d4856a" stroke-width="2" opacity="0.4" stroke-linecap="round" fill="none"/>
+    <path d="M0 0 C12 -28, 32 -48, 52 -68" stroke="#8a9e7a" stroke-width="2" opacity="0.45" stroke-linecap="round" fill="none"/>
+
+    <!-- Trunk -->
+    <path d="M0 0 L0 56" stroke="#e8e0d4" stroke-width="2" opacity="0.25" stroke-linecap="round"/>
+
+    <!-- Nodes -->
+    <circle cy="0" r="4" fill="#e8e0d4" opacity="0.4"/>
+    <circle cy="56" r="4" fill="#e8e0d4" opacity="0.35"/>
+
+    <!-- Roots -->
+    <path d="M0 56 C-12 80, -32 96, -52 120" stroke="#c4a882" stroke-width="2.5" opacity="0.6" stroke-linecap="round" fill="none"/>
+    <path d="M0 56 C0 82, 0 104, 1 130" stroke="#d4856a" stroke-width="2.5" opacity="0.5" stroke-linecap="round" fill="none"/>
+    <path d="M0 56 C12 80, 32 96, 52 120" stroke="#8a9e7a" stroke-width="2.5" opacity="0.45" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="600" y="430" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-size="52" font-weight="300" letter-spacing="6">
+    <tspan fill="#e8e0d4">Mind</tspan><tspan fill="#a89478">Root</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="600" y="470" text-anchor="middle" font-family="'Inter', sans-serif" font-size="14" fill="#6b5f4e" letter-spacing="4" text-transform="uppercase">
+    EMOÇÃO + AÇÃO + TEMPO
+  </text>
+
+  <!-- Version tag -->
+  <text x="600" y="590" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#2a2520" letter-spacing="2">
+    PRODUTIVIDADE EMOCIONAL
+  </text>
+</svg>
