@@ -1,5 +1,5 @@
 # MindRoot — Production Setup Guide
-## v1.0.0-alpha.6
+## v1.0.0-alpha.7
 
 Checklist completo para o MindRoot funcionar em produção.
 
