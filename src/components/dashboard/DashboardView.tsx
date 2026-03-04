@@ -71,7 +71,12 @@ export default function DashboardView({
   );
 
   if (activeItems.length === 0) {
-    return <EmptyState />;
+    return (
+      <EmptyState
+        title="Tudo comeca aqui"
+        description="Use o input acima para capturar sua primeira tarefa ou pensamento"
+      />
+    );
   }
 
   return (

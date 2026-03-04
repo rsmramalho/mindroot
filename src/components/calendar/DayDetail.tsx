@@ -76,7 +76,11 @@ export default function DayDetail({
       </div>
 
       {dayItems.length === 0 && (
-        <EmptyState title="Dia livre" description="Nenhum item agendado" />
+        <EmptyState
+          title="Dia livre"
+          description="Nenhum item agendado"
+          positive
+        />
       )}
 
       {/* Pending items */}

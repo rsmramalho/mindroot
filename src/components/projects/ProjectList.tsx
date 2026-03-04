@@ -4,6 +4,8 @@
 import type { ProjectWithChildren } from '@/hooks/useProject';
 import ProjectCard from '@/components/projects/ProjectCard';
 import EmptyState from '@/components/shared/EmptyState';
+import { useItemMutations } from '@/hooks/useItemMutations';
+import { useAppStore } from '@/store/app-store';
 
 interface ProjectListProps {
   projects: ProjectWithChildren[];
@@ -11,11 +13,28 @@ interface ProjectListProps {
 }
 
 export default function ProjectList({ projects, onSelect }: ProjectListProps) {
+  const { createItem } = useItemMutations();
+  const user = useAppStore((s) => s.user);
+
+  const handleCreateProject = async () => {
+    if (!user) return;
+    const item = await createItem.mutateAsync({
+      user_id: user.id,
+      title: 'Novo Projeto',
+      type: 'project',
+    });
+    if (item?.id) {
+      onSelect(item.id);
+    }
+  };
+
   if (projects.length === 0) {
     return (
       <EmptyState
         title="Nenhum projeto"
-        description="Crie projetos com #type_project no input"
+        description="Organize suas tarefas em projetos"
+        actionLabel="+ Novo Projeto"
+        onAction={handleCreateProject}
       />
     );
   }
@@ -53,7 +72,7 @@ export default function ProjectList({ projects, onSelect }: ProjectListProps) {
               padding: '8px 4px 0',
             }}
           >
-            Concluídos
+            Concluidos
           </span>
           {completed.map((p) => (
             <ProjectCard

@@ -1,6 +1,7 @@
 // components/journal/JournalView.tsx — Main journal view
 // Entries grouped by date, emotion stats, writing prompt
 
+import { useRef } from 'react';
 import { useJournal } from '@/hooks/useJournal';
 import { useRitualStore } from '@/store/ritual-store';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -10,6 +11,7 @@ import JournalPrompt from './JournalPrompt';
 export default function JournalView() {
   const { grouped, stats, isLoading } = useJournal();
   const { periodColor } = useRitualStore();
+  const promptRef = useRef<{ open: () => void }>(null);
 
   if (isLoading) {
     return (
@@ -54,14 +56,15 @@ export default function JournalView() {
       </div>
 
       {/* ━━━ Write prompt ━━━ */}
-      <JournalPrompt />
+      <JournalPrompt ref={promptRef} />
 
       {/* ━━━ Entries by date ━━━ */}
       {grouped.length === 0 ? (
         <EmptyState
-          icon="○"
           title="Nenhuma reflexao ainda"
           description="Complete rituais ou escreva diretamente para comecar"
+          actionLabel="Escrever primeira reflexao"
+          onAction={() => promptRef.current?.open()}
         />
       ) : (
         grouped.map((group) => (

@@ -73,7 +73,11 @@ export function InboxPage() {
       </div>
 
       {inboxItems.length === 0 && (
-        <EmptyState message="Inbox vazio" submessage="Itens sem módulo aparecem aqui" />
+        <EmptyState
+          message="Tudo classificado"
+          submessage="Nenhum item pendente de organizacao"
+          positive
+        />
       )}
 
       {inboxItems.map((item) => (

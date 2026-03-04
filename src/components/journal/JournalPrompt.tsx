@@ -1,7 +1,7 @@
 // components/journal/JournalPrompt.tsx — New journal entry writer
 // Prompted writing with emotion selection, saves to DB
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Emotion } from '@/types/item';
 import { useItemMutations } from '@/hooks/useItemMutations';
@@ -10,7 +10,11 @@ import { useRitualStore } from '@/store/ritual-store';
 import { getRandomPrompt } from '@/engine/soul';
 import EmotionPicker from '@/components/soul/EmotionPicker';
 
-export default function JournalPrompt() {
+export interface JournalPromptHandle {
+  open: () => void;
+}
+
+const JournalPrompt = forwardRef<JournalPromptHandle>(function JournalPrompt(_props, ref) {
   const [isOpen, setIsOpen] = useState(false);
   const [text, setText] = useState('');
   const [emotion, setEmotion] = useState<Emotion | null>(null);
@@ -22,6 +26,10 @@ export default function JournalPrompt() {
   const { currentPeriod, periodColor } = useRitualStore();
 
   const prompt = getRandomPrompt(currentPeriod);
+
+  useImperativeHandle(ref, () => ({
+    open: () => setIsOpen(true),
+  }));
 
   const handleSave = useCallback(async () => {
     if (!user || !text.trim()) return;
@@ -221,7 +229,9 @@ export default function JournalPrompt() {
       </AnimatePresence>
     </div>
   );
-}
+});
+
+export default JournalPrompt;
 
 // Quick color lookup for emotion button
 const EMOTION_STYLES_MAP: Record<string, string> = {

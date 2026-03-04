@@ -1,9 +1,11 @@
 // components/input/AtomInput.tsx — ★ O input central (com AI parsing em tempo real)
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { parseInput } from '@/engine/parsing';
 import { aiService } from '@/service/ai-service';
 import type { AIParsedResult } from '@/service/ai-service';
 import { useAppStore } from '@/store/app-store';
+import { useOnboardingStore } from '@/store/onboarding-store';
 import { useItemMutations } from '@/hooks/useItemMutations';
 import { TokenPreview } from './TokenPreview';
 import { AiPreview } from './AiPreview';
@@ -20,6 +22,8 @@ export function AtomInput() {
   const user = useAppStore((s) => s.user);
   const { setInputFocused } = useAppStore();
   const { createItem } = useItemMutations();
+  const { inputTooltipShown, setInputTooltipShown } = useOnboardingStore();
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
@@ -134,8 +138,18 @@ export function AtomInput() {
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => setInputFocused(true)}
-          onBlur={() => setInputFocused(false)}
+          onFocus={() => {
+            setInputFocused(true);
+            if (!inputTooltipShown) {
+              setShowTooltip(true);
+              setInputTooltipShown();
+              setTimeout(() => setShowTooltip(false), 4000);
+            }
+          }}
+          onBlur={() => {
+            setInputFocused(false);
+            setShowTooltip(false);
+          }}
           placeholder="O que está na sua mente?"
           className="w-full bg-surface border border-border rounded-lg px-4 py-3 text-sm font-sans text-light placeholder:text-muted/50 focus:outline-none focus:border-mind/50 focus:ring-1 focus:ring-mind/20 transition-colors"
           autoComplete="off"
@@ -153,6 +167,30 @@ export function AtomInput() {
           </button>
         )}
       </div>
+
+      {/* First-use tooltip */}
+      <AnimatePresence>
+        {showTooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.25 }}
+            style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: '11px',
+              color: '#a8947870',
+              backgroundColor: '#1a1d24',
+              border: '1px solid #a8947815',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              marginTop: '6px',
+            }}
+          >
+            Experimente: Meditar 10min #mod_soul @amanha
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Manual tokens preview (instant, local) */}
       {parsed && parsed.tokens.length > 0 && (

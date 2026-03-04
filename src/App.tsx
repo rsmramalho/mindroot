@@ -20,6 +20,8 @@ import { AnalyticsPage } from '@/pages/Analytics';
 // Global components
 import CommandPalette from '@/components/shared/CommandPalette';
 import SettingsDrawer from '@/components/settings/SettingsDrawer';
+import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
+import { useOnboardingStore } from '@/store/onboarding-store';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +86,7 @@ function AuthenticatedApp() {
 
 function AppContent() {
   const { user, loading } = useAuth();
+  const onboardingDone = useOnboardingStore((s) => s.onboardingDone);
 
   if (loading) {
     return (
@@ -117,6 +120,10 @@ function AppContent() {
 
   if (!user) {
     return <AuthPage />;
+  }
+
+  if (!onboardingDone) {
+    return <WelcomeFlow />;
   }
 
   return <AuthenticatedApp />;
