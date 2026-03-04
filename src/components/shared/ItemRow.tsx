@@ -9,6 +9,7 @@ import ModuleBadge from './ModuleBadge';
 import PriorityDot from './PriorityDot';
 import TagChip from './TagChip';
 import type { AtomItem } from '@/types/item';
+import { getRecurrenceBadge } from '@/engine/recurrence';
 
 interface ItemRowProps {
   item: AtomItem;
@@ -161,6 +162,26 @@ export default function ItemRow({
 
         {/* Module badge */}
         {!compact && <ModuleBadge module={item.module} size="sm" showLabel={false} />}
+
+        {/* Recurrence badge */}
+        {!compact && getRecurrenceBadge(item.recurrence) && (
+          <span
+            style={{
+              fontSize: '9px',
+              fontFamily: '"JetBrains Mono", monospace',
+              fontWeight: 500,
+              color: '#a8947860',
+              backgroundColor: '#a8947810',
+              border: '1px solid #a8947815',
+              borderRadius: '4px',
+              padding: '1px 5px',
+              letterSpacing: '0.04em',
+              flexShrink: 0,
+            }}
+          >
+            ↻ {getRecurrenceBadge(item.recurrence)}
+          </span>
+        )}
 
         {/* Due date */}
         {formatDueDate() && (

@@ -1,9 +1,10 @@
-// hooks/useItems.ts — TanStack Query wrapper + filtros derivados
+// hooks/useItems.ts — TanStack Query wrapper + filtros derivados + virtual reset
 import { useQuery } from '@tanstack/react-query';
 import { itemService } from '@/service/item-service';
 import { useAppStore } from '@/store/app-store';
 import { useMemo } from 'react';
 import { isToday, parseISO } from 'date-fns';
+import { applyVirtualReset } from '@/engine/recurrence';
 
 export function useItems() {
   const user = useAppStore((s) => s.user);
@@ -16,7 +17,11 @@ export function useItems() {
     staleTime: 30_000,
   });
 
-  const items = query.data ?? [];
+  // Apply virtual reset to recurring items
+  const items = useMemo(
+    () => applyVirtualReset(query.data ?? []),
+    [query.data]
+  );
 
   // Derived filtered lists
   const filtered = useMemo(() => {

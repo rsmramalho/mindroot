@@ -1,8 +1,9 @@
-// hooks/useRitual.ts — Ritual items per period + completion flow
+// hooks/useRitual.ts — Ritual items per period + completion flow + virtual reset
 import { useMemo } from 'react';
 import { useItems } from '@/hooks/useItems';
 import { useRitualStore } from '@/store/ritual-store';
 import { getRandomPrompt } from '@/engine/soul';
+import { applyVirtualReset } from '@/engine/recurrence';
 import type { AtomItem, RitualPeriod } from '@/types/item';
 import { RITUAL_PERIODS, getCurrentPeriod } from '@/types/ui';
 
@@ -10,11 +11,11 @@ export function useRitual() {
   const { items, isLoading } = useItems();
   const { currentPeriod } = useRitualStore();
 
-  // All ritual items (type === 'ritual')
-  const allRituals = useMemo(
-    () => items.filter((i) => i.type === 'ritual' && !i.archived),
-    [items]
-  );
+  // All ritual items (type === 'ritual') with virtual reset applied
+  const allRituals = useMemo(() => {
+    const rituals = items.filter((i) => i.type === 'ritual' && !i.archived);
+    return applyVirtualReset(rituals);
+  }, [items]);
 
   // Rituals for current period
   const periodRituals = useMemo(

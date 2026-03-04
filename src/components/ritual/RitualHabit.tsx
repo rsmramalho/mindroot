@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AtomItem } from '@/types/item';
 import { MODULES } from '@/types/item';
+import { getRecurrenceBadge } from '@/engine/recurrence';
 
 interface RitualHabitProps {
   item: AtomItem;
@@ -15,6 +16,7 @@ interface RitualHabitProps {
 export default function RitualHabit({ item, onToggle, periodColor }: RitualHabitProps) {
   const [pressing, setPressing] = useState(false);
   const moduleInfo = MODULES.find((m) => m.key === item.module);
+  const recurrenceBadge = getRecurrenceBadge(item.recurrence);
 
   return (
     <motion.button
@@ -101,6 +103,27 @@ export default function RitualHabit({ item, onToggle, periodColor }: RitualHabit
             </span>
           )}
         </div>
+
+        {/* Recurrence badge */}
+        {recurrenceBadge && (
+          <span
+            style={{
+              fontSize: '9px',
+              fontFamily: '"JetBrains Mono", monospace',
+              fontWeight: 500,
+              color: item.completed ? `${periodColor}60` : periodColor,
+              backgroundColor: `${periodColor}10`,
+              border: `1px solid ${periodColor}20`,
+              borderRadius: '4px',
+              padding: '2px 6px',
+              letterSpacing: '0.04em',
+              opacity: item.completed ? 0.5 : 0.8,
+              flexShrink: 0,
+            }}
+          >
+            ↻ {recurrenceBadge}
+          </span>
+        )}
 
         {/* Check-in indicator */}
         {item.needs_checkin && !item.completed && (

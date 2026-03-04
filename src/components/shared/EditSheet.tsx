@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { AtomItem, UpdateItemPayload, ItemModule, ItemPriority } from '@/types/item';
 import ModulePicker from './ModulePicker';
 import PriorityPicker from './PriorityPicker';
+import RecurrencePicker from './RecurrencePicker';
 import TagChip from './TagChip';
 
 interface EditSheetProps {
@@ -21,6 +22,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
   const [module, setModule] = useState<ItemModule | null>(null);
   const [priority, setPriority] = useState<ItemPriority | null>(null);
   const [dueDate, setDueDate] = useState('');
+  const [recurrence, setRecurrence] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [description, setDescription] = useState('');
@@ -33,6 +35,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
       setModule(item.module);
       setPriority(item.priority);
       setDueDate(item.due_date ? item.due_date.split('T')[0] : '');
+      setRecurrence(item.recurrence || null);
       setTags(item.tags || []);
       setDescription(item.description || '');
       setTimeout(() => titleRef.current?.focus(), 200);
@@ -64,6 +67,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
 
     if (JSON.stringify(tags) !== JSON.stringify(item.tags)) updates.tags = tags;
     if (description !== (item.description || '')) updates.description = description || null;
+    if (recurrence !== (item.recurrence || null)) updates.recurrence = recurrence;
 
     // Only save if something changed
     if (Object.keys(updates).length > 0) {
@@ -226,6 +230,9 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
 
               {/* Priority */}
               <PriorityPicker value={priority} onChange={setPriority} />
+
+              {/* Recurrence */}
+              <RecurrencePicker value={recurrence} onChange={setRecurrence} />
 
               {/* Due Date */}
               <div className="flex flex-col gap-1.5">
