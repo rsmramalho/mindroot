@@ -3,6 +3,7 @@
 // Seções: Overdue → Focus → Hoje → Por Módulo → Ativo (sem data)
 
 import { useMemo } from 'react';
+import { motion } from 'framer-motion';
 import type { AtomItem } from '@/types/item';
 import {
   getOverdueItems,
@@ -74,12 +75,25 @@ export default function DashboardView({
   }
 
   return (
-    <div className="flex flex-col gap-4" style={{ paddingBottom: '80px' }}>
+    <motion.div
+      className="flex flex-col gap-4"
+      style={{ paddingBottom: '80px' }}
+      initial="hidden"
+      animate="visible"
+      variants={{
+        hidden: {},
+        visible: { transition: { staggerChildren: 0.06 } },
+      }}
+    >
       {/* ━━━ Overdue Alert ━━━ */}
-      <OverdueAlert items={overdueItems} />
+      <motion.div variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}>
+        <OverdueAlert items={overdueItems} />
+      </motion.div>
 
       {/* ━━━ Focus Block ━━━ */}
-      <FocusBlock items={focusItems} onComplete={onComplete} />
+      <motion.div variants={{ hidden: { opacity: 0, y: 8 }, visible: { opacity: 1, y: 0, transition: { duration: 0.25 } } }}>
+        <FocusBlock items={focusItems} onComplete={onComplete} />
+      </motion.div>
 
       {/* ━━━ Hoje ━━━ */}
       {todayItems.length > 0 && (
@@ -139,7 +153,7 @@ export default function DashboardView({
           ))}
         </Section>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -157,7 +171,13 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
+    <motion.div
+      className="flex flex-col gap-0.5"
+      variants={{
+        hidden: { opacity: 0, y: 8 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.25, ease: 'easeOut' } },
+      }}
+    >
       <div className="flex items-center gap-2" style={{ padding: '0 4px' }}>
         {color && (
           <span
@@ -188,6 +208,6 @@ function Section({
         </span>
       </div>
       <div className="flex flex-col">{children}</div>
-    </div>
+    </motion.div>
   );
 }

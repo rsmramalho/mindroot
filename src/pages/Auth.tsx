@@ -1,5 +1,6 @@
 // pages/Auth.tsx — Login + Sign Up
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 
 export function AuthPage() {
@@ -29,7 +30,12 @@ export function AuthPage() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center bg-bg px-6">
+    <motion.div
+      className="min-h-dvh flex flex-col items-center justify-center bg-bg px-6"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+    >
       {/* Logo */}
       <div className="mb-10 text-center">
         <h1 className="font-serif text-4xl font-bold text-light tracking-wider">
@@ -105,6 +111,6 @@ export function AuthPage() {
       >
         {isLogin ? 'Não tem conta? Criar agora' : 'Já tem conta? Fazer login'}
       </button>
-    </div>
+    </motion.div>
   );
 }

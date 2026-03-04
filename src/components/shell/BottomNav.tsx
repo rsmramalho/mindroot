@@ -1,4 +1,5 @@
 // components/shell/BottomNav.tsx — ⌂ ▦ ◎ ○
+import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/app-store';
 import type { AppPage } from '@/types/ui';
 
@@ -28,12 +29,27 @@ export function BottomNav() {
             <button
               key={page}
               onClick={() => navigate(page)}
-              className={`flex flex-col items-center justify-center gap-0.5 px-4 py-1 transition-colors ${
+              className={`relative flex flex-col items-center justify-center gap-0.5 px-4 py-1 transition-colors ${
                 active ? 'text-mind' : 'text-muted hover:text-light'
               }`}
             >
-              <span className="text-lg font-mono leading-none">{icon}</span>
+              <motion.span
+                className="text-lg font-mono leading-none"
+                animate={{ scale: active ? 1.1 : 1 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+              >
+                {icon}
+              </motion.span>
               <span className="text-[10px] font-sans">{label}</span>
+
+              {/* Active indicator bar */}
+              {active && (
+                <motion.div
+                  layoutId="nav-indicator"
+                  className="absolute -top-px left-2 right-2 h-[2px] rounded-full bg-mind"
+                  transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+                />
+              )}
             </button>
           );
         })}

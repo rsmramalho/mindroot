@@ -2,6 +2,7 @@
 // ⌘K command palette — navigate, search items, quick actions
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/app-store';
 import { useItems } from '@/hooks/useItems';
 import type { AppPage } from '@/types/ui';
@@ -143,14 +144,20 @@ export default function CommandPalette() {
   if (!open) return null;
 
   return (
-    <div
+    <AnimatePresence>
+      {open && (
+    <motion.div
       className="fixed inset-0 z-[60] flex items-start justify-center pt-[15vh]"
       style={{ backgroundColor: '#111318d0' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
       onClick={(e) => {
         if (e.target === e.currentTarget) close();
       }}
     >
-      <div
+      <motion.div
         className="w-full max-w-md mx-4 overflow-hidden"
         style={{
           backgroundColor: '#1a1d24',
@@ -158,6 +165,10 @@ export default function CommandPalette() {
           border: '1px solid #a8947820',
           boxShadow: '0 20px 60px #00000060',
         }}
+        initial={{ opacity: 0, scale: 0.95, y: -10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: -10 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
       >
         {/* Search input */}
         <div
@@ -324,8 +335,10 @@ export default function CommandPalette() {
             ↵ selecionar
           </span>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

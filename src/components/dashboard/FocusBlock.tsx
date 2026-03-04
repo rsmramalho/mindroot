@@ -32,10 +32,10 @@ export default function FocusBlock({ items, onComplete }: FocusBlockProps) {
       </span>
 
       <div
-        className="rounded-lg"
+        className="rounded-lg focus-glow"
         style={{
           backgroundColor: '#1a1d24',
-          border: '1px solid #c4a88215',
+          border: '1px solid #c4a88220',
           padding: '6px 4px',
         }}
       >

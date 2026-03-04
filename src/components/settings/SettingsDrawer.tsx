@@ -1,6 +1,7 @@
 // components/settings/SettingsDrawer.tsx — Settings overlay
 // Sign out, notifications, PWA install, about
 
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { usePWA } from '@/hooks/usePWA';
 import { useNotifications } from '@/hooks/useNotifications';
@@ -18,8 +19,6 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     useNotifications();
   const navigate = useAppStore((s) => s.navigate);
 
-  if (!open) return null;
-
   const handleSignOut = async () => {
     await signOut();
     onClose();
@@ -31,19 +30,29 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   };
 
   return (
-    <div
+    <AnimatePresence>
+      {open && (
+    <motion.div
       className="fixed inset-0 z-[55] flex items-start justify-end"
       style={{ backgroundColor: '#111318d0' }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
+      <motion.div
         className="h-full w-full max-w-xs overflow-y-auto"
         style={{
           backgroundColor: '#1a1d24',
           borderLeft: '1px solid #a8947815',
         }}
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', stiffness: 350, damping: 30 }}
       >
         {/* Header */}
         <div
@@ -195,8 +204,10 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             MindRoot v1.0.0-alpha.5
           </span>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 

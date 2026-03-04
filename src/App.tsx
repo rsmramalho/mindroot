@@ -1,6 +1,7 @@
 // App.tsx — Router + Providers (< 80 linhas)
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppStore } from '@/store/app-store';
 import { AppShell } from '@/components/shell/AppShell';
@@ -31,25 +32,41 @@ const queryClient = new QueryClient({
 function PageRouter() {
   const currentPage = useAppStore((s) => s.currentPage);
 
-  switch (currentPage) {
-    case 'home':
-      return <HomePage />;
-    case 'inbox':
-      return <InboxPage />;
-    case 'projects':
-    case 'project-detail':
-      return <ProjectsPage />;
-    case 'calendar':
-      return <CalendarPage />;
-    case 'ritual':
-      return <RitualPage />;
-    case 'journal':
-      return <JournalPage />;
-    case 'analytics':
-      return <AnalyticsPage />;
-    default:
-      return <HomePage />;
-  }
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home':
+        return <HomePage />;
+      case 'inbox':
+        return <InboxPage />;
+      case 'projects':
+      case 'project-detail':
+        return <ProjectsPage />;
+      case 'calendar':
+        return <CalendarPage />;
+      case 'ritual':
+        return <RitualPage />;
+      case 'journal':
+        return <JournalPage />;
+      case 'analytics':
+        return <AnalyticsPage />;
+      default:
+        return <HomePage />;
+    }
+  };
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={currentPage}
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -6 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
+      >
+        {renderPage()}
+      </motion.div>
+    </AnimatePresence>
+  );
 }
 
 function AuthenticatedApp() {
@@ -72,6 +89,15 @@ function AppContent() {
       <div className="min-h-dvh flex items-center justify-center bg-bg">
         <div className="text-center">
           <h1 className="font-serif text-2xl text-light animate-pulse">MindRoot</h1>
+          <div className="mt-4 flex justify-center gap-1.5">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full bg-mind/40 animate-pulse"
+                style={{ animationDelay: `${i * 200}ms` }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     );

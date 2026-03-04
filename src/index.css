@@ -66,3 +66,42 @@ input:-webkit-autofill {
   -webkit-box-shadow: 0 0 0 30px var(--color-surface) inset !important;
   -webkit-text-fill-color: var(--color-light) !important;
 }
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Focus visible ring */
+*:focus-visible {
+  outline: 1px solid rgba(196, 168, 130, 0.4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Shimmer loading animation */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #1a1d24 25%,
+    #2a2d3440 50%,
+    #1a1d24 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Subtle glow for focus block */
+@keyframes subtleGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(196, 168, 130, 0); }
+  50% { box-shadow: 0 0 20px -5px rgba(196, 168, 130, 0.08); }
+}
+
+.focus-glow {
+  animation: subtleGlow 4s ease-in-out infinite;
+}

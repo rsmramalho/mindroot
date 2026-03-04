@@ -2,6 +2,7 @@
 // Overlay que aparece ao completar task com check-in
 // Três fases: prompt → picking → result
 
+import { motion, AnimatePresence } from 'framer-motion';
 import type { CheckInState } from '@/hooks/useSoul';
 import type { Emotion } from '@/types/item';
 import EmotionPicker from './EmotionPicker';
@@ -22,24 +23,32 @@ export default function CheckInPrompt({
   onSkip,
   onDismiss,
 }: CheckInPromptProps) {
-  if (!state.active || !state.trigger) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-end justify-center"
-      style={{ backgroundColor: '#111318e0' }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && state.phase === 'result') onDismiss();
-      }}
-    >
-      <div
-        className="w-full max-w-md mx-4 mb-6 overflow-hidden"
-        style={{
-          backgroundColor: '#1a1d24',
-          borderRadius: '16px',
-          border: '1px solid #a8947815',
-        }}
-      >
+    <AnimatePresence>
+      {state.active && state.trigger && (
+        <motion.div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          style={{ backgroundColor: '#111318e0' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && state.phase === 'result') onDismiss();
+          }}
+        >
+          <motion.div
+            className="w-full max-w-md mx-4 mb-6 overflow-hidden"
+            style={{
+              backgroundColor: '#1a1d24',
+              borderRadius: '16px',
+              border: '1px solid #a8947815',
+            }}
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+          >
         {/* ━━━ Phase: Prompt ━━━ */}
         {state.phase === 'prompt' && (
           <div className="flex flex-col gap-4 p-6">
@@ -167,7 +176,9 @@ export default function CheckInPrompt({
             onDismiss={onDismiss}
           />
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
