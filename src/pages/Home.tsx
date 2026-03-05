@@ -12,6 +12,7 @@ import CheckInPrompt from '@/components/soul/CheckInPrompt';
 import SoulPulse from '@/components/soul/SoulPulse';
 import EditSheet from '@/components/shared/EditSheet';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import { ListSkeleton } from '@/components/shared/Skeleton';
 
 export function HomePage() {
   const { items, isLoading } = useItems();
@@ -64,10 +65,9 @@ export function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <span className="font-serif text-lg text-muted/40 font-light animate-pulse">
-          carregando...
-        </span>
+      <div className="flex flex-col gap-4 px-1">
+        <div className="h-12 animate-pulse rounded-lg" style={{ backgroundColor: '#a8947808' }} />
+        <ListSkeleton count={5} type="item" />
       </div>
     );
   }

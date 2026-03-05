@@ -21,6 +21,7 @@ import { AnalyticsPage } from '@/pages/Analytics';
 import CommandPalette from '@/components/shared/CommandPalette';
 import SettingsDrawer from '@/components/settings/SettingsDrawer';
 import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
+import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useOnboardingStore } from '@/store/onboarding-store';
 
 const queryClient = new QueryClient({
@@ -77,7 +78,9 @@ function AuthenticatedApp() {
 
   return (
     <AppShell onOpenSettings={() => setSettingsOpen(true)}>
-      <PageRouter />
+      <ErrorBoundary>
+        <PageRouter />
+      </ErrorBoundary>
       <CommandPalette />
       <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </AppShell>

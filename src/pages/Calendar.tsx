@@ -49,10 +49,17 @@ export function CalendarPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <span className="font-serif text-lg text-muted/40 font-light animate-pulse">
-          carregando...
-        </span>
+      <div className="flex flex-col gap-4 px-1">
+        <div className="h-8 w-24 animate-pulse rounded" style={{ backgroundColor: '#a8947810' }} />
+        <div className="grid grid-cols-7 gap-1">
+          {Array.from({ length: 35 }).map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded"
+              style={{ height: 36, backgroundColor: '#a8947808' }}
+            />
+          ))}
+        </div>
       </div>
     );
   }

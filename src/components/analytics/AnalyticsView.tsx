@@ -15,16 +15,23 @@ export default function AnalyticsView() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <span
-          style={{
-            fontFamily: '"Cormorant Garamond", serif',
-            fontSize: '18px',
-            color: '#a8947860',
-          }}
-        >
-          ...
-        </span>
+      <div className="space-y-6 py-4">
+        <div className="flex justify-center gap-2">
+          {[7, 14, 30].map((r) => (
+            <div
+              key={r}
+              className="animate-pulse rounded-full"
+              style={{ width: 48, height: 28, backgroundColor: '#a8947810' }}
+            />
+          ))}
+        </div>
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="animate-pulse rounded-xl"
+            style={{ height: 120, backgroundColor: '#a8947808' }}
+          />
+        ))}
       </div>
     );
   }

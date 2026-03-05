@@ -1,10 +1,12 @@
 // hooks/useItemMutations.ts
 // createItem: aceita CreateItemPayload (compatível com AtomInput)
 // updateMutation/completeMutation/etc: usados por Dashboard/Inbox
+// alpha.10: toast notifications on success/error, undo on delete/archive
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { itemService } from '@/service/item-service';
 import type { AtomItem, CreateItemPayload, UpdateItemPayload } from '@/types/item';
+import { toast } from '@/store/toast-store';
 
 export function useItemMutations() {
   const queryClient = useQueryClient();
@@ -14,7 +16,15 @@ export function useItemMutations() {
     mutationFn: async (payload: CreateItemPayload) => {
       return itemService.create(payload);
     },
-    onSuccess: invalidate,
+    onSuccess: (item) => {
+      invalidate();
+      if (item) {
+        toast.success('Item criado');
+      }
+    },
+    onError: () => {
+      toast.error('Erro ao criar item');
+    },
   });
 
   const updateMutation = useMutation({
@@ -27,10 +37,24 @@ export function useItemMutations() {
       queryClient.setQueryData<AtomItem[]>(['items'], (old) =>
         old?.map((item) => (item.id === id ? { ...item, ...updates } : item))
       );
-      return { previous };
+      return { previous, updates };
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) queryClient.setQueryData(['items'], context.previous);
+      toast.error('Erro ao atualizar item');
+    },
+    onSuccess: (_data, { updates }, context) => {
+      // Archive has its own undo toast
+      if (updates.archived === true && context?.previous) {
+        const previousItems = context.previous;
+        toast.success('Item arquivado', {
+          undoAction: () => {
+            queryClient.setQueryData(['items'], previousItems);
+            const id = _data?.id;
+            if (id) itemService.update(id, { archived: false });
+          },
+        });
+      }
     },
     onSettled: invalidate,
   });
@@ -47,8 +71,12 @@ export function useItemMutations() {
       );
       return { previous };
     },
+    onSuccess: () => {
+      toast.success('Item concluido');
+    },
     onError: (_err, _id, context) => {
       if (context?.previous) queryClient.setQueryData(['items'], context.previous);
+      toast.error('Erro ao concluir item');
     },
     onSettled: invalidate,
   });
@@ -67,6 +95,7 @@ export function useItemMutations() {
     },
     onError: (_err, _id, context) => {
       if (context?.previous) queryClient.setQueryData(['items'], context.previous);
+      toast.error('Erro ao reabrir item');
     },
     onSettled: invalidate,
   });
@@ -81,8 +110,22 @@ export function useItemMutations() {
       );
       return { previous };
     },
+    onSuccess: (_data, _id, context) => {
+      if (context?.previous) {
+        const previousItems = context.previous;
+        toast.success('Item excluido', {
+          undoAction: () => {
+            queryClient.setQueryData(['items'], previousItems);
+            queryClient.invalidateQueries({ queryKey: ['items'] });
+          },
+        });
+      } else {
+        toast.success('Item excluido');
+      }
+    },
     onError: (_err, _id, context) => {
       if (context?.previous) queryClient.setQueryData(['items'], context.previous);
+      toast.error('Erro ao excluir item');
     },
     onSettled: invalidate,
   });

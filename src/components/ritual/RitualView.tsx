@@ -11,6 +11,7 @@ import type { AtomItem, RitualPeriod } from '@/types/item';
 import RitualHabit from './RitualHabit';
 import RitualCheckIn from './RitualCheckIn';
 import CheckInPrompt from '@/components/soul/CheckInPrompt';
+import { ListSkeleton } from '@/components/shared/Skeleton';
 
 export default function RitualView() {
   const {
@@ -42,16 +43,12 @@ export default function RitualView() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <span
-          style={{
-            fontFamily: '"Cormorant Garamond", serif',
-            fontSize: '18px',
-            color: '#a8947860',
-          }}
-        >
-          ...
-        </span>
+      <div className="space-y-6">
+        <div className="text-center py-2">
+          <div className="h-8 w-32 mx-auto animate-pulse rounded" style={{ backgroundColor: '#a8947810' }} />
+          <div className="h-3 w-20 mx-auto mt-2 animate-pulse rounded" style={{ backgroundColor: '#a8947808' }} />
+        </div>
+        <ListSkeleton count={4} type="ritual" />
       </div>
     );
   }

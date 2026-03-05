@@ -7,6 +7,7 @@ import { useRitualStore } from '@/store/ritual-store';
 import { EmptyState } from '@/components/shared/EmptyState';
 import JournalEntry from './JournalEntry';
 import JournalPrompt from './JournalPrompt';
+import { ListSkeleton } from '@/components/shared/Skeleton';
 
 export default function JournalView() {
   const { grouped, stats, isLoading } = useJournal();
@@ -15,16 +16,21 @@ export default function JournalView() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <span
-          style={{
-            fontFamily: '"Cormorant Garamond", serif',
-            fontSize: '18px',
-            color: '#a8947860',
-          }}
-        >
-          ...
-        </span>
+      <div className="space-y-6">
+        <div className="text-center py-1">
+          <h2
+            style={{
+              fontFamily: '"Cormorant Garamond", serif',
+              fontSize: '24px',
+              fontWeight: 300,
+              color: '#e8e0d4',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Journal
+          </h2>
+        </div>
+        <ListSkeleton count={3} type="journal" />
       </div>
     );
   }

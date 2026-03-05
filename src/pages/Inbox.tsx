@@ -10,6 +10,7 @@ import InboxActions from '@/components/inbox/InboxActions';
 import EmptyState from '@/components/shared/EmptyState';
 import EditSheet from '@/components/shared/EditSheet';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import { ListSkeleton } from '@/components/shared/Skeleton';
 import { startOfDay, formatISO } from 'date-fns';
 
 export function InboxPage() {
@@ -83,10 +84,13 @@ export function InboxPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <span className="font-serif text-lg text-muted/40 font-light animate-pulse">
-          carregando...
-        </span>
+      <div className="flex flex-col gap-2 px-1">
+        <div className="flex items-center justify-between px-1 pb-2">
+          <h2 className="font-serif text-xl font-light text-light tracking-tight">
+            Inbox
+          </h2>
+        </div>
+        <ListSkeleton count={4} type="item" />
       </div>
     );
   }

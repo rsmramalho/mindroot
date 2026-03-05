@@ -1,7 +1,9 @@
 // components/shell/AppShell.tsx — Layout principal
+// alpha.10: Toast container mounted here
 import type { ReactNode } from 'react';
 import { TopBar } from './TopBar';
 import { BottomNav } from './BottomNav';
+import ToastContainer from '@/components/shared/Toast';
 
 interface AppShellProps {
   children: ReactNode;
@@ -16,6 +18,7 @@ export function AppShell({ children, onOpenSettings }: AppShellProps) {
         {children}
       </main>
       <BottomNav />
+      <ToastContainer />
     </div>
   );
 }

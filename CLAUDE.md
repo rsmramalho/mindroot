@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0-alpha.9 — Recurrence engine + virtual reset + streak display.
+v1.0.0-alpha.10 — Feedback visual: toasts, error boundaries, loading skeletons.
 
 ## Stack
 
@@ -77,7 +77,7 @@ supabase/        # Migrations, edge functions, seeds
 | Analytics | pages/Analytics.tsx | Heatmap, emotional pulse, module breakdown, streaks |
 | Auth | pages/Auth.tsx | Email/password + Google OAuth |
 
-## Components (42)
+## Components (45)
 
 - analytics/ (1): AnalyticsView
 - calendar/ (3): CalendarView, MonthGrid, DayDetail
@@ -89,7 +89,7 @@ supabase/        # Migrations, edge functions, seeds
 - projects/ (3): ProjectList, ProjectCard, ProjectSheet
 - ritual/ (3): RitualView, RitualHabit, RitualCheckIn
 - settings/ (1): SettingsDrawer
-- shared/ (12): CommandPalette, ConfirmDialog, EditSheet, EmptyState, ItemRow, Logo, ModuleBadge, ModulePicker, PriorityDot, PriorityPicker, RecurrencePicker, TagChip
+- shared/ (15): CommandPalette, ConfirmDialog, EditSheet, EmptyState, ErrorBoundary, ItemRow, Logo, ModuleBadge, ModulePicker, PriorityDot, PriorityPicker, RecurrencePicker, Skeleton, TagChip, Toast
 - shell/ (3): AppShell, BottomNav, TopBar
 - soul/ (4): EmotionPicker, CheckInPrompt, PostCheckIn, SoulPulse
 
@@ -105,9 +105,9 @@ supabase, item-service, auth-service, ai-service, notification-service
 
 parsing (natural input → structured data), soul (check-in triggers, emotion shift), dashboard-filters, recurrence (virtual reset, period detection, streak)
 
-## Stores (3)
+## Stores (4)
 
-app-store (navigation, filters, soul state, user), ritual-store (period, check-in, reflection), onboarding-store (welcome flow, tooltip flags)
+app-store (navigation, filters, soul state, user), ritual-store (period, check-in, reflection), onboarding-store (welcome flow, tooltip flags), toast-store (notification queue, auto-dismiss, undo)
 
 ## Edge Function — parse-input
 
@@ -125,10 +125,10 @@ app-store (navigation, filters, soul state, user), ritual-store (period, check-i
 
 ## Tests
 
-- Unit: 270 tests, 14 suites (vitest)
+- Unit: 286 tests, 15 suites (vitest)
 - E2E: 69 tests, 10 specs (playwright)
 - Pattern: pure logic extraction, no React providers or Supabase mocks needed
-- Src LOC: ~13,083
+- Src LOC: ~13,834
 
 ## Production
 
@@ -156,3 +156,4 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.7 | 04/03/2026 | Onboarding welcome flow + actionable empty states + input tooltip |
 | alpha.8 | 05/03/2026 | Item editing — EditSheet, ModulePicker, PriorityPicker, ConfirmDialog, inline edit, audit script |
 | alpha.9 | 05/03/2026 | Recurrence engine, virtual reset, RecurrencePicker, recurrence badges (270 tests) |
+| alpha.10 | 05/03/2026 | Feedback visual: toast notifications, error boundaries, loading skeletons (286 tests) |
