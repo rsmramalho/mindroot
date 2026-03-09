@@ -1,14 +1,15 @@
 // sw.js — MindRoot Service Worker
-// Caches app shell + fonts, serves offline fallback
+// alpha.11: Push notifications + cache strategy
 
-const CACHE_NAME = 'mindroot-v1';
+const CACHE_NAME = 'mindroot-v2';
 const SHELL_ASSETS = [
   '/',
   '/manifest.json',
   '/favicon.svg',
 ];
 
-// Install: cache app shell
+// ─── Install: cache app shell ───────────────────────────────
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL_ASSETS))
@@ -16,7 +17,8 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Activate: clean old caches
+// ─── Activate: clean old caches ─────────────────────────────
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -28,7 +30,8 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: network-first for API, cache-first for assets
+// ─── Fetch: network-first for API, cache-first for assets ──
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
@@ -67,4 +70,64 @@ self.addEventListener('fetch', (event) => {
       })
     );
   }
+});
+
+// ─── Push: receive and show notifications ───────────────────
+
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'MindRoot',
+    body: '',
+    tag: 'mindroot-general',
+    url: '/',
+  };
+
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    } catch {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/favicon.svg',
+    badge: '/favicon.svg',
+    tag: data.tag,
+    data: { url: data.url },
+    vibrate: [100, 50, 100],
+    actions: [
+      { action: 'open', title: 'Abrir' },
+      { action: 'dismiss', title: 'Fechar' },
+    ],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// ─── Notification click: open/focus app ─────────────────────
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.action === 'dismiss') return;
+
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      // Focus existing window if available
+      for (const client of clients) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Otherwise open new window
+      return self.clients.openWindow(urlToOpen);
+    })
+  );
 });

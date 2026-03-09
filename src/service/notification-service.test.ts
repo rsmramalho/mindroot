@@ -113,3 +113,83 @@ describe('notificationService.send', () => {
     notificationService.send('test');
   });
 });
+
+describe('notificationService.getPermissionState', () => {
+  it('returns granted when Notification.permission is granted', () => {
+    vi.stubGlobal('Notification', class { static permission = 'granted'; });
+    expect(notificationService.getPermissionState()).toBe('granted');
+  });
+
+  it('returns unsupported when Notification is not available', () => {
+    // Remove Notification from global
+    const orig = (globalThis as Record<string, unknown>).Notification;
+    delete (globalThis as Record<string, unknown>).Notification;
+    expect(notificationService.getPermissionState()).toBe('unsupported');
+    (globalThis as Record<string, unknown>).Notification = orig;
+  });
+});
+
+describe('notificationService.countOverdueItems', () => {
+  const makeItem = (due_date: string | null, completed = false, archived = false) => ({
+    id: '1', user_id: 'u', title: 't', type: 'task' as const,
+    module: null, priority: null, tags: [], parent_id: null,
+    completed, completed_at: null, archived, due_date,
+    due_time: null, recurrence: null, ritual_period: null,
+    emotion_before: null, emotion_after: null, needs_checkin: false,
+    is_chore: false, energy_cost: null, description: null,
+    context: null, created_at: '2026-01-01T05:00:00Z', updated_at: '2026-01-01T05:00:00Z',
+  });
+
+  it('counts items with past due_date', () => {
+    const items = [
+      makeItem('2020-01-01'),
+      makeItem('2020-06-15'),
+      makeItem(null),
+    ];
+    expect(notificationService.countOverdueItems(items)).toBe(2);
+  });
+
+  it('excludes completed and archived items', () => {
+    const items = [
+      makeItem('2020-01-01', true),
+      makeItem('2020-01-01', false, true),
+    ];
+    expect(notificationService.countOverdueItems(items)).toBe(0);
+  });
+
+  it('returns 0 when no overdue items', () => {
+    const items = [makeItem(null)];
+    expect(notificationService.countOverdueItems(items)).toBe(0);
+  });
+});
+
+describe('notificationService.shouldSendOverdueReminder', () => {
+  it('returns true when never checked', () => {
+    expect(notificationService.shouldSendOverdueReminder(null)).toBe(true);
+  });
+
+  it('returns false when checked today', () => {
+    const today = new Date().toISOString().slice(0, 10);
+    expect(notificationService.shouldSendOverdueReminder(today)).toBe(false);
+  });
+
+  it('returns true when checked yesterday', () => {
+    const yesterday = new Date(Date.now() - 86400_000).toISOString().slice(0, 10);
+    expect(notificationService.shouldSendOverdueReminder(yesterday)).toBe(true);
+  });
+});
+
+describe('notificationService.getMsUntilNextTransition', () => {
+  it('returns a non-negative number', () => {
+    const ms = notificationService.getMsUntilNextTransition();
+    expect(ms).toBeGreaterThanOrEqual(0);
+  });
+});
+
+describe('notificationService.setPendingRitualCount', () => {
+  it('updates internal count', () => {
+    notificationService.setPendingRitualCount(5);
+    expect(notificationService._pendingRitualCount).toBe(5);
+    notificationService.setPendingRitualCount(0);
+  });
+});

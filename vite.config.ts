@@ -14,7 +14,7 @@ export default defineConfig({
     open: true,
   },
   test: {
-    exclude: ['e2e/**', 'node_modules/**'],
+    exclude: ['e2e/**', 'node_modules/**', 'Organizar Jan26/**', 'Push/**'],
   },
   build: {
     rollupOptions: {

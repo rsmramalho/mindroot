@@ -15,7 +15,7 @@ interface SettingsDrawerProps {
 export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const { user, signOut } = useAuth();
   const { canInstall, isInstalled, promptInstall } = usePWA();
-  const { supported: notifSupported, enabled: notifEnabled, enable: enableNotif } =
+  const { supported: notifSupported, enabled: notifEnabled, enable: enableNotif, disable: disableNotif, periodTransitions, overdueReminders, ritualReminders, pushSubscribed, permissionState, setPreference } =
     useNotifications();
   const navigate = useAppStore((s) => s.navigate);
 
@@ -113,30 +113,63 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
 
           {/* Notifications */}
           {notifSupported && (
-            <SettingsItem
-              label="Notificacoes"
-              description={
-                notifEnabled
-                  ? 'Ativas — transicoes de periodo'
-                  : 'Receba alertas de ritual e itens atrasados'
-              }
-              onClick={enableNotif}
-              trailing={
-                <span
-                  style={{
-                    fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: '10px',
-                    color: notifEnabled ? '#8a9e7a' : '#a8947850',
-                    backgroundColor: notifEnabled ? '#8a9e7a15' : '#a8947810',
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    border: `1px solid ${notifEnabled ? '#8a9e7a30' : '#a8947815'}`,
-                  }}
-                >
-                  {notifEnabled ? 'on' : 'off'}
-                </span>
-              }
-            />
+            <>
+              <SettingsItem
+                label="Notificacoes"
+                description={
+                  permissionState === 'denied'
+                    ? 'Bloqueadas pelo navegador'
+                    : notifEnabled
+                    ? `Ativas${pushSubscribed ? ' — push ativo' : ' — local'}`
+                    : 'Receba alertas de ritual e itens atrasados'
+                }
+                onClick={notifEnabled ? disableNotif : enableNotif}
+                trailing={
+                  <span
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: '10px',
+                      color: permissionState === 'denied'
+                        ? '#e85d5d80'
+                        : notifEnabled ? '#8a9e7a' : '#a8947850',
+                      backgroundColor: permissionState === 'denied'
+                        ? '#e85d5d10'
+                        : notifEnabled ? '#8a9e7a15' : '#a8947810',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      border: `1px solid ${
+                        permissionState === 'denied'
+                          ? '#e85d5d20'
+                          : notifEnabled ? '#8a9e7a30' : '#a8947815'
+                      }`,
+                    }}
+                  >
+                    {permissionState === 'denied' ? 'bloq' : notifEnabled ? 'on' : 'off'}
+                  </span>
+                }
+              />
+
+              {/* Granular toggles — only when enabled */}
+              {notifEnabled && (
+                <>
+                  <SettingsToggle
+                    label="Transicoes de periodo"
+                    checked={periodTransitions}
+                    onChange={(v) => setPreference('periodTransitions', v)}
+                  />
+                  <SettingsToggle
+                    label="Items atrasados"
+                    checked={overdueReminders}
+                    onChange={(v) => setPreference('overdueReminders', v)}
+                  />
+                  <SettingsToggle
+                    label="Lembretes de ritual"
+                    checked={ritualReminders}
+                    onChange={(v) => setPreference('ritualReminders', v)}
+                  />
+                </>
+              )}
+            </>
           )}
 
           {/* PWA Install */}
@@ -201,7 +234,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               color: '#a8947825',
             }}
           >
-            MindRoot v1.0.0-alpha.7
+            MindRoot v1.0.0-alpha.11
           </span>
         </div>
       </motion.div>
@@ -267,6 +300,56 @@ function SettingsItem({
         )}
       </div>
       {trailing}
+    </button>
+  );
+}
+
+// ─── Settings Toggle (checkbox-style sub-item) ─────────────
+
+function SettingsToggle({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className="w-full text-left flex items-center gap-3 rounded-lg transition-all duration-150"
+      style={{
+        padding: '8px 12px 8px 32px',
+        backgroundColor: 'transparent',
+        cursor: 'pointer',
+      }}
+    >
+      <div className="flex-1 min-w-0">
+        <span
+          style={{
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '12px',
+            fontWeight: 400,
+            color: checked ? '#e8e0d4' : '#a8947860',
+          }}
+        >
+          {label}
+        </span>
+      </div>
+      <span
+        style={{
+          fontFamily: '"JetBrains Mono", monospace',
+          fontSize: '9px',
+          color: checked ? '#8a9e7a' : '#a8947840',
+          backgroundColor: checked ? '#8a9e7a10' : 'transparent',
+          padding: '2px 6px',
+          borderRadius: '4px',
+          border: `1px solid ${checked ? '#8a9e7a25' : '#a8947815'}`,
+        }}
+      >
+        {checked ? 'on' : 'off'}
+      </span>
     </button>
   );
 }

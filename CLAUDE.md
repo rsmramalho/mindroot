@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0-alpha.10 — Feedback visual: toasts, error boundaries, loading skeletons.
+v1.0.0-alpha.11 — Push notifications: SW push handler, notification preferences, period scheduling, overdue reminders.
 
 ## Stack
 
@@ -15,7 +15,7 @@ React 19 · TypeScript 5.8 · Vite 6 · Tailwind 3.4 · Supabase · TanStack Que
 ```bash
 npm run dev      # Dev server (port 5173)
 npm run build    # tsc -b && vite build
-npm test         # vitest (270 tests, 14 suites)
+npm test         # vitest (309 tests, 17 suites)
 npx tsc --noEmit # Type check only
 npx playwright test # E2E tests (69 tests, 10 specs)
 bash scripts/audit.sh  # Full system audit (20 checks)
@@ -77,7 +77,7 @@ supabase/        # Migrations, edge functions, seeds
 | Analytics | pages/Analytics.tsx | Heatmap, emotional pulse, module breakdown, streaks |
 | Auth | pages/Auth.tsx | Email/password + Google OAuth |
 
-## Components (45)
+## Components (46)
 
 - analytics/ (1): AnalyticsView
 - calendar/ (3): CalendarView, MonthGrid, DayDetail
@@ -89,7 +89,7 @@ supabase/        # Migrations, edge functions, seeds
 - projects/ (3): ProjectList, ProjectCard, ProjectSheet
 - ritual/ (3): RitualView, RitualHabit, RitualCheckIn
 - settings/ (1): SettingsDrawer
-- shared/ (15): CommandPalette, ConfirmDialog, EditSheet, EmptyState, ErrorBoundary, ItemRow, Logo, ModuleBadge, ModulePicker, PriorityDot, PriorityPicker, RecurrencePicker, Skeleton, TagChip, Toast
+- shared/ (16): CommandPalette, ConfirmDialog, EditSheet, EmptyState, ErrorBoundary, ItemRow, Logo, ModuleBadge, ModulePicker, NotificationPrompt, PriorityDot, PriorityPicker, RecurrencePicker, Skeleton, TagChip, Toast
 - shell/ (3): AppShell, BottomNav, TopBar
 - soul/ (4): EmotionPicker, CheckInPrompt, PostCheckIn, SoulPulse
 
@@ -97,17 +97,17 @@ supabase/        # Migrations, edge functions, seeds
 
 useAnalytics, useAuth, useItemMutations, useItems, useJournal, useNotifications, usePWA, useProject, useRitual, useSoul
 
-## Services (5)
+## Services (6)
 
-supabase, item-service, auth-service, ai-service, notification-service
+supabase, item-service, auth-service, ai-service, notification-service, push-service
 
 ## Engine (4)
 
 parsing (natural input → structured data), soul (check-in triggers, emotion shift), dashboard-filters, recurrence (virtual reset, period detection, streak)
 
-## Stores (4)
+## Stores (5)
 
-app-store (navigation, filters, soul state, user), ritual-store (period, check-in, reflection), onboarding-store (welcome flow, tooltip flags), toast-store (notification queue, auto-dismiss, undo)
+app-store (navigation, filters, soul state, user), ritual-store (period, check-in, reflection), onboarding-store (welcome flow, tooltip flags), toast-store (notification queue, auto-dismiss, undo), notification-store (push prefs, permission state, overdue tracking)
 
 ## Edge Function — parse-input
 
@@ -116,19 +116,28 @@ app-store (navigation, filters, soul state, user), ritual-store (period, check-i
 - Input: natural Portuguese text → JSON (title, type, module, priority, emotion, due_date, etc)
 - Integration: ai-service.ts → AiPreview.tsx (debounce 800ms, shows before submit)
 
+## Edge Function — send-push
+
+- Path: supabase/functions/send-push/index.ts
+- Sends Web Push notifications to subscribed users
+- Types: period-transition, overdue-reminder
+- Requires VAPID keys (generate via scripts/generate-vapid-keys.js)
+- Can be triggered by pg_cron, external cron, or manual invocation
+
 ## Database
 
 - supabase/migrations/001_core_schema.sql — items table + RLS
 - supabase/migrations/002_fix_type_constraint.sql — expanded type enum
 - supabase/migrations/003_auto_seed_rituals.sql — auto-seed rituals on first login
 - supabase/migrations/004_backfill_ritual_recurrence.sql — set recurrence='daily' on existing rituals
+- supabase/migrations/005_push_subscriptions.sql — push notification subscription storage
 
 ## Tests
 
-- Unit: 286 tests, 15 suites (vitest)
+- Unit: 309 tests, 17 suites (vitest)
 - E2E: 69 tests, 10 specs (playwright)
 - Pattern: pure logic extraction, no React providers or Supabase mocks needed
-- Src LOC: ~13,834
+- Src LOC: ~14,681
 
 ## Production
 
@@ -157,3 +166,4 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.8 | 05/03/2026 | Item editing — EditSheet, ModulePicker, PriorityPicker, ConfirmDialog, inline edit, audit script |
 | alpha.9 | 05/03/2026 | Recurrence engine, virtual reset, RecurrencePicker, recurrence badges (270 tests) |
 | alpha.10 | 05/03/2026 | Feedback visual: toast notifications, error boundaries, loading skeletons (286 tests) |
+| alpha.11 | 05/03/2026 | Push notifications: SW push handler, notification-store, push-service, period scheduling, overdue reminders, NotificationPrompt, granular settings (309 tests) |

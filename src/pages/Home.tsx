@@ -1,10 +1,11 @@
 // pages/Home.tsx — Dashboard principal + Soul Layer integration
-// alpha.8: EditSheet + ConfirmDialog integration
+// alpha.11: NotificationPrompt + item feed for overdue checks
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useItems } from '@/hooks/useItems';
 import { useItemMutations } from '@/hooks/useItemMutations';
 import { useSoul } from '@/hooks/useSoul';
+import { useNotifications } from '@/hooks/useNotifications';
 import type { AtomItem, UpdateItemPayload } from '@/types/item';
 import DashboardView from '@/components/dashboard/DashboardView';
 import { AtomInput } from '@/components/input/AtomInput';
@@ -12,12 +13,19 @@ import CheckInPrompt from '@/components/soul/CheckInPrompt';
 import SoulPulse from '@/components/soul/SoulPulse';
 import EditSheet from '@/components/shared/EditSheet';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import NotificationPrompt from '@/components/shared/NotificationPrompt';
 import { ListSkeleton } from '@/components/shared/Skeleton';
 
 export function HomePage() {
   const { items, isLoading } = useItems();
   const { completeMutation, uncompleteMutation, updateMutation, deleteMutation } = useItemMutations();
   const { checkIn, onItemComplete, startPicking, selectEmotion, skip, dismiss } = useSoul();
+  const { updateItems } = useNotifications();
+
+  // Feed items to notification system for overdue counting
+  useEffect(() => {
+    if (items.length > 0) updateItems(items);
+  }, [items, updateItems]);
 
   // Edit sheet state
   const [editingItem, setEditingItem] = useState<AtomItem | null>(null);
@@ -75,6 +83,9 @@ export function HomePage() {
   return (
     <div className="flex flex-col gap-4 px-1">
       <AtomInput />
+
+      {/* Notification permission prompt — soft ask */}
+      <NotificationPrompt />
 
       {/* Soul Pulse — só aparece se tem emoções registradas */}
       <SoulPulse items={items} />
