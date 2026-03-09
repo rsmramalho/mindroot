@@ -44,7 +44,6 @@ export function useItemMutations() {
       toast.error('Erro ao atualizar item');
     },
     onSuccess: (_data, { updates }, context) => {
-      // Archive has its own undo toast
       if (updates.archived === true && context?.previous) {
         const previousItems = context.previous;
         toast.success('Item arquivado', {
@@ -54,6 +53,8 @@ export function useItemMutations() {
             if (id) itemService.update(id, { archived: false });
           },
         });
+      } else if (updates.archived !== true) {
+        toast.success('Item atualizado');
       }
     },
     onSettled: invalidate,
@@ -92,6 +93,9 @@ export function useItemMutations() {
         )
       );
       return { previous };
+    },
+    onSuccess: () => {
+      toast.success('Item reaberto');
     },
     onError: (_err, _id, context) => {
       if (context?.previous) queryClient.setQueryData(['items'], context.previous);

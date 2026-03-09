@@ -157,7 +157,7 @@ export default function RitualCheckIn({
             <EmotionPicker
               selected={selectedEmotion}
               onSelect={handleEmotionSelect}
-              label="Como voce esta agora?"
+              label="Como você se sente agora?"
             />
 
             <button

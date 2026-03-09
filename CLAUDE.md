@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0-alpha.11 — Push notifications: SW push handler, notification preferences, period scheduling, overdue reminders.
+v1.0.0-alpha.12 — M1 stabilization: bug fixes, error handling, toast feedback parity, UI spelling consistency.
 
 ## Stack
 
@@ -167,3 +167,4 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.9 | 05/03/2026 | Recurrence engine, virtual reset, RecurrencePicker, recurrence badges (270 tests) |
 | alpha.10 | 05/03/2026 | Feedback visual: toast notifications, error boundaries, loading skeletons (286 tests) |
 | alpha.11 | 05/03/2026 | Push notifications: SW push handler, notification-store, push-service, period scheduling, overdue reminders, NotificationPrompt, granular settings (309 tests) |
+| alpha.12 | 09/03/2026 | M1 stabilization: AtomInput error recovery, toast parity (uncomplete/update), JournalPrompt stable prompt, BottomNav project-detail highlight, Google OAuth error handling, UI spelling fixes (309 tests) |

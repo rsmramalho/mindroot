@@ -93,7 +93,13 @@ export function AuthPage() {
 
       {/* Google */}
       <button
-        onClick={signInWithGoogle}
+        onClick={async () => {
+          try {
+            await signInWithGoogle();
+          } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Erro ao conectar com Google');
+          }
+        }}
         className="w-full max-w-sm mt-4 flex items-center justify-center gap-2 bg-surface border border-border rounded-lg py-3 font-sans text-sm text-light hover:border-mind/30 transition-colors"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">

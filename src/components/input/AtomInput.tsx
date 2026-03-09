@@ -92,28 +92,32 @@ export function AtomInput() {
       finalParsed = aiService.mergeWithLocal(aiResult, localParsed);
     }
 
-    await createItem.mutateAsync({
-      user_id: user.id,
-      title: finalParsed.title || value.trim(),
-      type: finalParsed.type,
-      module: finalParsed.module,
-      priority: finalParsed.priority,
-      emotion_before: finalParsed.emotion_before,
-      emotion_after: finalParsed.emotion_after,
-      needs_checkin: finalParsed.needs_checkin,
-      is_chore: finalParsed.is_chore,
-      due_date: finalParsed.due_date,
-      due_time: finalParsed.due_time,
-      ritual_period: finalParsed.ritual_period,
-      tags: finalParsed.tags,
-      context: finalParsed.context,
-    });
+    try {
+      await createItem.mutateAsync({
+        user_id: user.id,
+        title: finalParsed.title || value.trim(),
+        type: finalParsed.type,
+        module: finalParsed.module,
+        priority: finalParsed.priority,
+        emotion_before: finalParsed.emotion_before,
+        emotion_after: finalParsed.emotion_after,
+        needs_checkin: finalParsed.needs_checkin,
+        is_chore: finalParsed.is_chore,
+        due_date: finalParsed.due_date,
+        due_time: finalParsed.due_time,
+        ritual_period: finalParsed.ritual_period,
+        tags: finalParsed.tags,
+        context: finalParsed.context,
+      });
 
-    setValue('');
-    setParsed(null);
-    setAiResult(null);
-    setAiPending(false);
-    lastAiQuery.current = '';
+      setValue('');
+      setParsed(null);
+      setAiResult(null);
+      setAiPending(false);
+      lastAiQuery.current = '';
+    } catch {
+      // Toast already shown by mutation onError
+    }
     inputRef.current?.focus();
   }, [value, user, parsed, aiResult, createItem]);
 

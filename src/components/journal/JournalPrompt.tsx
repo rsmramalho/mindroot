@@ -1,7 +1,7 @@
 // components/journal/JournalPrompt.tsx — New journal entry writer
 // Prompted writing with emotion selection, saves to DB
 
-import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useState, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Emotion } from '@/types/item';
 import { useItemMutations } from '@/hooks/useItemMutations';
@@ -25,7 +25,8 @@ const JournalPrompt = forwardRef<JournalPromptHandle>(function JournalPrompt(_pr
   const user = useAppStore((s) => s.user);
   const { currentPeriod, periodColor } = useRitualStore();
 
-  const prompt = getRandomPrompt(currentPeriod);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const prompt = useMemo(() => getRandomPrompt(currentPeriod), [currentPeriod]);
 
   useImperativeHandle(ref, () => ({
     open: () => setIsOpen(true),
