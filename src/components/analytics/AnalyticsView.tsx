@@ -7,11 +7,13 @@ import { MODULES, POSITIVE_EMOTIONS } from '@/types/item';
 import type { DailySnapshot, ModuleStats } from '@/hooks/useAnalytics';
 import type { Insight, EmotionProductivity, PeriodProductivity } from '@/engine/insights';
 import EmptyState from '@/components/shared/EmptyState';
+import ShareStreakCard from '@/components/dashboard/ShareStreakCard';
 
 type TimeRange = 7 | 14 | 30;
 
 export default function AnalyticsView() {
   const [range, setRange] = useState<TimeRange>(30);
+  const [showShareStreak, setShowShareStreak] = useState(false);
   const { dailySnapshots, moduleStats, streak, summary, insights, emotionProductivity, periodProductivity, isLoading } = useAnalytics(range);
 
   if (isLoading) {
@@ -90,11 +92,17 @@ export default function AnalyticsView() {
           label="concluídos"
           color="#8a9e7a"
         />
-        <SummaryCard
-          value={String(streak.current)}
-          label="dias seguidos"
-          color="#c4a882"
-        />
+        <button
+          onClick={() => setShowShareStreak(true)}
+          className="text-left"
+          aria-label="Compartilhar streak"
+        >
+          <SummaryCard
+            value={String(streak.current)}
+            label="dias seguidos"
+            color="#c4a882"
+          />
+        </button>
         <SummaryCard
           value={summary.topEmotion || '—'}
           label="emocao freq."
@@ -127,6 +135,12 @@ export default function AnalyticsView() {
         <StatCard label="Trabalho inv." value={String(summary.choresDone)} />
         <StatCard label="Recorde" value={`${streak.longest}d`} />
       </div>
+
+      <ShareStreakCard
+        streak={streak}
+        open={showShareStreak}
+        onClose={() => setShowShareStreak(false)}
+      />
     </div>
   );
 }

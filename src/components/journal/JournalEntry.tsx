@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { AtomItem } from '@/types/item';
 import { EMOTION_STYLES } from '@/components/soul/EmotionPicker';
+import ShareReflectionSheet from './ShareReflectionSheet';
 import { format, parseISO } from 'date-fns';
 
 interface JournalEntryProps {
@@ -13,6 +14,7 @@ interface JournalEntryProps {
 
 export default function JournalEntry({ item }: JournalEntryProps) {
   const [expanded, setExpanded] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   const isReflection = item.type === 'reflection';
   const hasDescription = !!item.description;
@@ -190,10 +192,38 @@ export default function JournalEntry({ item }: JournalEntryProps) {
                   {item.ritual_period}
                 </div>
               )}
+
+              {/* Share button */}
+              {isReflection && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowShare(true);
+                  }}
+                  className="mt-3"
+                  style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '12px',
+                    fontWeight: 500,
+                    color: '#c4a88280',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    backgroundColor: '#c4a88210',
+                    border: '1px solid #c4a88215',
+                  }}
+                >
+                  Compartilhar
+                </button>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ShareReflectionSheet
+        item={showShare ? item : null}
+        onClose={() => setShowShare(false)}
+      />
     </motion.div>
   );
 }

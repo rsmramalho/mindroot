@@ -8,6 +8,7 @@ import { AppShell } from '@/components/shell/AppShell';
 import { LogoFull } from '@/components/shared/Logo';
 
 // Pages
+import { SharedContentPage } from '@/pages/SharedContent';
 import { AuthPage } from '@/pages/Auth';
 import { HomePage } from '@/pages/Home';
 import { InboxPage } from '@/pages/Inbox';
@@ -142,6 +143,17 @@ function AppContent() {
 }
 
 export default function App() {
+  // Intercept /share/:token before auth guard (public route)
+  const shareMatch = window.location.pathname.match(/^\/share\/([a-f0-9-]{36})$/);
+
+  if (shareMatch) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <SharedContentPage token={shareMatch[1]} />
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppContent />
