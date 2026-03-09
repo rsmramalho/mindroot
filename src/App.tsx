@@ -103,6 +103,11 @@ function AppContent() {
   const moduleColors = useThemeStore((s) => s.moduleColors);
   const [showAuth, setShowAuth] = useState(false);
 
+  // BUG 1 fix: reset showAuth when user logs out
+  useEffect(() => {
+    if (!user) setShowAuth(false);
+  }, [user]);
+
   // Apply theme CSS vars on mount and when theme changes
   useEffect(() => {
     applyThemeToDom({ mode: themeMode, moduleColors, dashboardOrder: useThemeStore.getState().dashboardOrder });
@@ -151,8 +156,10 @@ function AppContent() {
 }
 
 export default function App() {
+  const pathname = window.location.pathname;
+
   // Intercept /share/:token before auth guard (public route)
-  const shareMatch = window.location.pathname.match(/^\/share\/([a-f0-9-]{36})$/);
+  const shareMatch = pathname.match(/^\/share\/([a-f0-9-]{36})$/);
 
   if (shareMatch) {
     return (
@@ -160,6 +167,13 @@ export default function App() {
         <SharedContentPage token={shareMatch[1]} />
       </QueryClientProvider>
     );
+  }
+
+  // Handle /auth/callback — Google OAuth redirect lands here
+  // Supabase JS auto-exchanges the code via onAuthStateChange,
+  // so we just clean the URL and let AppContent render normally
+  if (pathname === '/auth/callback') {
+    window.history.replaceState(null, '', '/');
   }
 
   return (

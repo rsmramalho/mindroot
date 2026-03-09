@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePWA } from '@/hooks/usePWA';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAppStore } from '@/store/app-store';
+import { useOnboardingStore } from '@/store/onboarding-store';
 import { useThemeStore } from '@/store/theme-store';
 import { useItems } from '@/hooks/useItems';
 import { exportJournalMarkdown, exportAllDataJson } from '@/engine/export';
@@ -330,6 +331,18 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             description="Ctrl+K ou Cmd+K para acesso rapido"
             disabled
           />
+
+          {/* Reset onboarding — dev/testing only */}
+          {import.meta.env.DEV && (
+            <SettingsItem
+              label="Resetar onboarding"
+              description="Rever fluxo de boas-vindas"
+              onClick={() => {
+                useOnboardingStore.getState().resetOnboarding();
+                onClose();
+              }}
+            />
+          )}
 
           <div
             style={{
