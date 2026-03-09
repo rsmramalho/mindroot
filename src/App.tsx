@@ -25,7 +25,7 @@ const AnalyticsPage = lazy(() => import('@/pages/Analytics').then(m => ({ defaul
 // Global components
 import CommandPalette from '@/components/shared/CommandPalette';
 import SettingsDrawer from '@/components/settings/SettingsDrawer';
-import WelcomeFlow from '@/components/onboarding/WelcomeFlow';
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useOnboardingStore } from '@/store/onboarding-store';
 import { useThemeStore } from '@/store/theme-store';
@@ -144,7 +144,7 @@ function AppContent() {
   }
 
   if (!onboardingDone) {
-    return <WelcomeFlow />;
+    return <OnboardingWizard />;
   }
 
   return <AuthenticatedApp />;

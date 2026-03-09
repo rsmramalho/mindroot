@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0 — Released. Emotional productivity system.
+v1.0.0-alpha.23 — Landing melhorada (mockup, subtitulo, exemplos), onboarding wizard 3 passos.
 
 ## Stack
 
@@ -79,7 +79,7 @@ supabase/        # Migrations, edge functions, seeds
 | SharedContent | pages/SharedContent.tsx | Public page for shared reflections & streaks (no auth required) |
 | Auth | pages/Auth.tsx | Email/password + Google OAuth |
 
-## Components (50)
+## Components (51)
 
 - analytics/ (1): AnalyticsView
 - calendar/ (3): CalendarView, MonthGrid, DayDetail
@@ -87,7 +87,7 @@ supabase/        # Migrations, edge functions, seeds
 - inbox/ (1): InboxActions
 - input/ (3): AtomInput, TokenPreview, AiPreview
 - journal/ (4): JournalView, JournalEntry, JournalPrompt, ShareReflectionSheet
-- onboarding/ (2): WelcomeFlow, WelcomeStep
+- onboarding/ (3): OnboardingWizard, WelcomeFlow (legacy), WelcomeStep (legacy)
 - projects/ (3): ProjectList, ProjectCard, ProjectSheet
 - ritual/ (3): RitualView, RitualHabit, RitualCheckIn
 - settings/ (1): SettingsDrawer
@@ -181,6 +181,7 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.20 | 09/03/2026 | Themes & personalization: dark/light toggle with CSS variables, custom module colors (12 presets), configurable dashboard section order (move up/down), theme-store with localStorage persistence, Settings UI controls with reset (455 tests) |
 | alpha.21 | 10/03/2026 | Sharing: public share links for reflections & streaks, share-service, ShareReflectionSheet, ShareStreakCard, SharedContentPage (/share/:token), 006_public_shares migration (467 tests) |
 | v1.0.0 | 10/03/2026 | Release: WCAG AA accessibility (aria-labels on pickers), lazy-loaded pages (code splitting), Landing page, console cleanup, USAGE.md docs, performance optimization (270KB main bundle) |
+| alpha.23 | 10/03/2026 | Landing melhorada (subtitulo, app mockup, exemplos concretos nos cards), OnboardingWizard 3 passos (nome + area foco, periodos rituais, primeira entrada) (467 tests) |
 
 ## Architecture Decisions
 
