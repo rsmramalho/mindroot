@@ -12,6 +12,12 @@ import {
   eachDayOfInterval,
   isSameDay,
 } from 'date-fns';
+import {
+  generateInsights,
+  computeEmotionProductivity,
+  computePeriodProductivity,
+} from '@/engine/insights';
+import type { Insight, EmotionProductivity, PeriodProductivity } from '@/engine/insights';
 
 export interface DailySnapshot {
   date: string; // yyyy-MM-dd
@@ -174,11 +180,27 @@ export function useAnalytics(days: number = 30) {
     };
   }, [recentCompleted, items, days]);
 
+  // Emotional insights
+  const insights = useMemo((): Insight[] => generateInsights(items), [items]);
+
+  const emotionProductivity = useMemo(
+    (): EmotionProductivity[] => computeEmotionProductivity(items.filter((i) => !i.archived)),
+    [items]
+  );
+
+  const periodProductivity = useMemo(
+    (): PeriodProductivity[] => computePeriodProductivity(items.filter((i) => !i.archived)),
+    [items]
+  );
+
   return {
     dailySnapshots,
     moduleStats,
     streak,
     summary,
+    insights,
+    emotionProductivity,
+    periodProductivity,
     isLoading,
   };
 }

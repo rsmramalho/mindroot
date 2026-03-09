@@ -5,13 +5,14 @@ import { useState } from 'react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { MODULES, POSITIVE_EMOTIONS } from '@/types/item';
 import type { DailySnapshot, ModuleStats } from '@/hooks/useAnalytics';
+import type { Insight, EmotionProductivity, PeriodProductivity } from '@/engine/insights';
 import EmptyState from '@/components/shared/EmptyState';
 
 type TimeRange = 7 | 14 | 30;
 
 export default function AnalyticsView() {
   const [range, setRange] = useState<TimeRange>(30);
-  const { dailySnapshots, moduleStats, streak, summary, isLoading } = useAnalytics(range);
+  const { dailySnapshots, moduleStats, streak, summary, insights, emotionProductivity, periodProductivity, isLoading } = useAnalytics(range);
 
   if (isLoading) {
     return (
@@ -109,6 +110,15 @@ export default function AnalyticsView() {
 
       {/* Module Breakdown */}
       <ModuleBreakdown stats={moduleStats} />
+
+      {/* Insights */}
+      <InsightsPanel insights={insights} />
+
+      {/* Emotion → Productivity */}
+      <EmotionCorrelation data={emotionProductivity} />
+
+      {/* Period Productivity */}
+      <PeriodChart data={periodProductivity} />
 
       {/* Streak + Misc */}
       <div className="grid grid-cols-2 gap-3">
@@ -391,6 +401,274 @@ function ModuleBreakdown({ stats }: { stats: ModuleStats[] }) {
                   }}
                 >
                   {stat.avgEnergy}e
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Insights Panel ────────────────────────────────
+
+const INSIGHT_TYPE_STYLES: Record<string, { color: string; label: string }> = {
+  correlation: { color: '#c4a882', label: 'correlacao' },
+  timing: { color: '#8a9e7a', label: 'horario' },
+  pattern: { color: '#a89478', label: 'padrao' },
+  suggestion: { color: '#d4856a', label: 'sugestao' },
+};
+
+function InsightsPanel({ insights }: { insights: Insight[] }) {
+  if (insights.length === 0) return null;
+
+  return (
+    <div
+      className="rounded-lg"
+      style={{
+        backgroundColor: '#1a1d24',
+        border: '1px solid #a8947810',
+        padding: '14px 16px',
+      }}
+    >
+      <span
+        className="block mb-3"
+        style={{
+          fontFamily: '"Cormorant Garamond", serif',
+          fontSize: '14px',
+          fontWeight: 400,
+          color: '#a89478',
+        }}
+      >
+        Insights
+      </span>
+      <div className="flex flex-col gap-3">
+        {insights.slice(0, 5).map((insight) => {
+          const style = INSIGHT_TYPE_STYLES[insight.type] || INSIGHT_TYPE_STYLES.pattern;
+          return (
+            <div key={insight.id} className="flex items-start gap-2.5">
+              <span
+                className="flex-shrink-0 mt-0.5"
+                style={{
+                  fontSize: '8px',
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontWeight: 600,
+                  color: style.color,
+                  backgroundColor: `${style.color}15`,
+                  border: `1px solid ${style.color}25`,
+                  borderRadius: '4px',
+                  padding: '2px 5px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.06em',
+                }}
+              >
+                {style.label}
+              </span>
+              <span
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '13px',
+                  color: '#e8e0d4c0',
+                  lineHeight: 1.45,
+                }}
+              >
+                {insight.text}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Emotion Correlation ────────────────────────────
+
+function EmotionCorrelation({ data }: { data: EmotionProductivity[] }) {
+  if (data.length === 0) return null;
+
+  const maxRate = Math.max(...data.map((d) => d.completionRate), 1);
+
+  return (
+    <div
+      className="rounded-lg"
+      style={{
+        backgroundColor: '#1a1d24',
+        border: '1px solid #a8947810',
+        padding: '14px 16px',
+      }}
+    >
+      <span
+        className="block mb-3"
+        style={{
+          fontFamily: '"Cormorant Garamond", serif',
+          fontSize: '14px',
+          fontWeight: 400,
+          color: '#a89478',
+        }}
+      >
+        Emocao x Conclusao
+      </span>
+      <div className="flex flex-col gap-2">
+        {data.slice(0, 6).map((entry) => {
+          const barColor = entry.completionRate >= 60
+            ? '#8a9e7a'
+            : entry.completionRate >= 30
+              ? '#c4a882'
+              : '#d4856a';
+          return (
+            <div key={entry.emotion} className="flex items-center gap-2.5">
+              <span
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '12px',
+                  color: '#e8e0d4a0',
+                  fontWeight: 500,
+                  width: 68,
+                  flexShrink: 0,
+                }}
+              >
+                {entry.emotion}
+              </span>
+              <div
+                className="flex-1 rounded-full overflow-hidden"
+                style={{ height: 6, backgroundColor: '#a8947812' }}
+              >
+                <div
+                  className="rounded-full transition-all duration-500"
+                  style={{
+                    height: '100%',
+                    width: `${(entry.completionRate / maxRate) * 100}%`,
+                    backgroundColor: barColor,
+                    opacity: 0.7,
+                  }}
+                />
+              </div>
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: '10px',
+                  color: barColor,
+                  fontWeight: 500,
+                  flexShrink: 0,
+                  width: 32,
+                  textAlign: 'right',
+                }}
+              >
+                {entry.completionRate}%
+              </span>
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: '9px',
+                  color: '#a8947840',
+                  flexShrink: 0,
+                  width: 20,
+                  textAlign: 'right',
+                }}
+              >
+                ({entry.totalItems})
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Period Chart ────────────────────────────────────
+
+function PeriodChart({ data }: { data: PeriodProductivity[] }) {
+  const total = data.reduce((s, p) => s + p.totalCompleted, 0);
+  if (total === 0) return null;
+
+  const maxCompleted = Math.max(...data.map((p) => p.totalCompleted), 1);
+
+  const periodColors: Record<string, string> = {
+    manha: '#f0c674',
+    tarde: '#e8e0d4',
+    noite: '#8a6e5a',
+  };
+
+  return (
+    <div
+      className="rounded-lg"
+      style={{
+        backgroundColor: '#1a1d24',
+        border: '1px solid #a8947810',
+        padding: '14px 16px',
+      }}
+    >
+      <span
+        className="block mb-3"
+        style={{
+          fontFamily: '"Cormorant Garamond", serif',
+          fontSize: '14px',
+          fontWeight: 400,
+          color: '#a89478',
+        }}
+      >
+        Produtividade por periodo
+      </span>
+      <div className="flex gap-3">
+        {data.map((period) => {
+          const pct = Math.round((period.totalCompleted / total) * 100);
+          const color = periodColors[period.period] || '#a89478';
+          const modLabel = period.topModule
+            ? MODULES.find((m) => m.key === period.topModule)?.label
+            : null;
+
+          return (
+            <div key={period.period} className="flex-1 text-center">
+              {/* Bar */}
+              <div
+                className="mx-auto rounded-t-md"
+                style={{
+                  width: 24,
+                  height: Math.max(8, (period.totalCompleted / maxCompleted) * 48),
+                  backgroundColor: color,
+                  opacity: 0.6,
+                  marginBottom: 6,
+                }}
+              />
+              {/* Label */}
+              <span
+                className="block"
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color,
+                }}
+              >
+                {period.label}
+              </span>
+              {/* Percentage */}
+              <span
+                className="block"
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: '10px',
+                  color: '#a8947860',
+                  marginTop: 2,
+                }}
+              >
+                {pct}%
+              </span>
+              {/* Top module */}
+              {modLabel && (
+                <span
+                  className="block"
+                  style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: '9px',
+                    color: '#a8947840',
+                    marginTop: 2,
+                  }}
+                >
+                  {modLabel}
                 </span>
               )}
             </div>
