@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0-alpha.20 — Themes & personalization: dark/light toggle, custom module colors, configurable dashboard order.
+v1.0.0-alpha.21 — Sharing: public share links for reflections & streaks, /share/:token page.
 
 ## Stack
 
@@ -15,7 +15,7 @@ React 19 · TypeScript 5.8 · Vite 6 · Tailwind 3.4 · Supabase · TanStack Que
 ```bash
 npm run dev      # Dev server (port 5173)
 npm run build    # tsc -b && vite build
-npm test         # vitest (455 tests, 23 suites)
+npm test         # vitest (467 tests, 24 suites)
 npx tsc --noEmit # Type check only
 npx playwright test # E2E tests (69 tests, 10 specs)
 bash scripts/audit.sh  # Full system audit (20 checks)
@@ -64,7 +64,7 @@ supabase/        # Migrations, edge functions, seeds
 - `RitualPeriod`: aurora | zenite | crepusculo
 - `Emotion`: calmo | focado | grato | animado | confiante | ansioso | cansado | frustrado | triste | perdido | neutro
 
-## Pages (8)
+## Pages (9)
 
 | Page | File | Description |
 |------|------|-------------|
@@ -75,16 +75,17 @@ supabase/        # Migrations, edge functions, seeds
 | Ritual | pages/Ritual.tsx | Aurora/Zenite/Crepusculo with habits + check-in |
 | Journal | pages/Journal.tsx | Date-grouped entries + prompted writing + tag filter |
 | Analytics | pages/Analytics.tsx | Heatmap, emotional pulse, module breakdown, streaks, insights, emotion correlation, period chart |
+| SharedContent | pages/SharedContent.tsx | Public page for shared reflections & streaks (no auth required) |
 | Auth | pages/Auth.tsx | Email/password + Google OAuth |
 
-## Components (48)
+## Components (50)
 
 - analytics/ (1): AnalyticsView
 - calendar/ (3): CalendarView, MonthGrid, DayDetail
-- dashboard/ (4): DashboardView, FocusBlock, OverdueAlert, AiSuggestions
+- dashboard/ (5): DashboardView, FocusBlock, OverdueAlert, AiSuggestions, ShareStreakCard
 - inbox/ (1): InboxActions
 - input/ (3): AtomInput, TokenPreview, AiPreview
-- journal/ (3): JournalView, JournalEntry, JournalPrompt
+- journal/ (4): JournalView, JournalEntry, JournalPrompt, ShareReflectionSheet
 - onboarding/ (2): WelcomeFlow, WelcomeStep
 - projects/ (3): ProjectList, ProjectCard, ProjectSheet
 - ritual/ (3): RitualView, RitualHabit, RitualCheckIn
@@ -97,9 +98,9 @@ supabase/        # Migrations, edge functions, seeds
 
 useAnalytics, useAuth, useItemMutations, useItems, useJournal, useNotifications, useOfflineSync, usePWA, useProject, useRitual, useSoul
 
-## Services (6)
+## Services (7)
 
-supabase, item-service (offline-aware), auth-service, ai-service, notification-service, push-service
+supabase, item-service (offline-aware), auth-service, ai-service, notification-service, push-service, share-service
 
 ## Engine (10)
 
@@ -131,10 +132,11 @@ app-store (navigation, filters, soul state, user), ritual-store (period, check-i
 - supabase/migrations/003_auto_seed_rituals.sql — auto-seed rituals on first login
 - supabase/migrations/004_backfill_ritual_recurrence.sql — set recurrence='daily' on existing rituals
 - supabase/migrations/005_push_subscriptions.sql — push notification subscription storage
+- supabase/migrations/006_public_shares.sql — public sharing (reflections & streaks)
 
 ## Tests
 
-- Unit: 455 tests, 23 suites (vitest)
+- Unit: 467 tests, 24 suites (vitest)
 - E2E: 69 tests, 10 specs (playwright)
 - Pattern: pure logic extraction, no React providers or Supabase mocks needed
 - Src LOC: ~14,681
@@ -176,3 +178,4 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.18 | 09/03/2026 | AI contextual suggestions: pure engine with 7 pattern detectors (procrastination, emotion timing, overdue cluster, energy overload, positive streak, period emotion risk, module imbalance), AiSuggestions dashboard panel with dismissable cards, max 3 suggestions sorted by priority (411 tests) |
 | alpha.19 | 09/03/2026 | Export & backup: journal→Markdown export, full JSON backup (with meta), weekly auto-backup scheduling (localStorage), export buttons in SettingsDrawer (433 tests) |
 | alpha.20 | 09/03/2026 | Themes & personalization: dark/light toggle with CSS variables, custom module colors (12 presets), configurable dashboard section order (move up/down), theme-store with localStorage persistence, Settings UI controls with reset (455 tests) |
+| alpha.21 | 10/03/2026 | Sharing: public share links for reflections & streaks, share-service, ShareReflectionSheet, ShareStreakCard, SharedContentPage (/share/:token), 006_public_shares migration (467 tests) |
