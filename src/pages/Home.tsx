@@ -15,6 +15,7 @@ import EditSheet from '@/components/shared/EditSheet';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import NotificationPrompt from '@/components/shared/NotificationPrompt';
 import { ListSkeleton } from '@/components/shared/Skeleton';
+import AiSuggestions from '@/components/dashboard/AiSuggestions';
 
 export function HomePage() {
   const { items, isLoading } = useItems();
@@ -89,6 +90,9 @@ export function HomePage() {
 
       {/* Soul Pulse — só aparece se tem emoções registradas */}
       <SoulPulse items={items} />
+
+      {/* AI contextual suggestions — max 3 pattern-based */}
+      <AiSuggestions items={items} />
 
       <DashboardView
         items={items}
