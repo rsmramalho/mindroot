@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0-alpha.15 — Analytics v2: emotional insights, emotion-productivity correlation, period productivity, weekly patterns.
+v1.0.0-alpha.16 — Search + advanced filters: CommandPalette with module/emotion/period/date/tag filters, full-text search, journal tag filter.
 
 ## Stack
 
@@ -15,7 +15,7 @@ React 19 · TypeScript 5.8 · Vite 6 · Tailwind 3.4 · Supabase · TanStack Que
 ```bash
 npm run dev      # Dev server (port 5173)
 npm run build    # tsc -b && vite build
-npm test         # vitest (348 tests, 19 suites)
+npm test         # vitest (392 tests, 20 suites)
 npx tsc --noEmit # Type check only
 npx playwright test # E2E tests (69 tests, 10 specs)
 bash scripts/audit.sh  # Full system audit (20 checks)
@@ -73,7 +73,7 @@ supabase/        # Migrations, edge functions, seeds
 | Projects | pages/Projects.tsx | Project list + ProjectSheet (4 panes: Geral/Tarefas/Notas/Timeline) |
 | Calendar | pages/Calendar.tsx | MonthGrid + DayDetail |
 | Ritual | pages/Ritual.tsx | Aurora/Zenite/Crepusculo with habits + check-in |
-| Journal | pages/Journal.tsx | Date-grouped entries + prompted writing |
+| Journal | pages/Journal.tsx | Date-grouped entries + prompted writing + tag filter |
 | Analytics | pages/Analytics.tsx | Heatmap, emotional pulse, module breakdown, streaks, insights, emotion correlation, period chart |
 | Auth | pages/Auth.tsx | Email/password + Google OAuth |
 
@@ -101,9 +101,9 @@ useAnalytics, useAuth, useItemMutations, useItems, useJournal, useNotifications,
 
 supabase, item-service (offline-aware), auth-service, ai-service, notification-service, push-service
 
-## Engine (6)
+## Engine (7)
 
-parsing (natural input → structured data), soul (check-in triggers, emotion shift), dashboard-filters, recurrence (virtual reset, period detection, streak), offline-queue (IndexedDB queue, compaction, conflict resolution), insights (emotion-productivity correlation, period/weekday patterns, natural language suggestions)
+parsing (natural input → structured data), soul (check-in triggers, emotion shift), dashboard-filters, recurrence (virtual reset, period detection, streak), offline-queue (IndexedDB queue, compaction, conflict resolution), insights (emotion-productivity correlation, period/weekday patterns, natural language suggestions), search (query parsing with filter prefixes, relevance scoring, full-text search)
 
 ## Stores (6)
 
@@ -134,7 +134,7 @@ app-store (navigation, filters, soul state, user), ritual-store (period, check-i
 
 ## Tests
 
-- Unit: 348 tests, 19 suites (vitest)
+- Unit: 392 tests, 20 suites (vitest)
 - E2E: 69 tests, 10 specs (playwright)
 - Pattern: pure logic extraction, no React providers or Supabase mocks needed
 - Src LOC: ~14,681
@@ -171,3 +171,4 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.13 | 09/03/2026 | Offline queue: IndexedDB mutation queue, auto-sync on reconnect, queue compaction, last-write-wins conflict resolution, TopBar offline/pending indicator (324 tests) |
 | alpha.14 | 09/03/2026 | Energy cost UI: EnergyPicker (1-5 bar scale), EditSheet integration, ItemRow display, Analytics avgEnergy per module, #energy_N parsing token (329 tests) |
 | alpha.15 | 09/03/2026 | Analytics v2: insights engine (emotion-productivity correlation, period productivity, weekday patterns), InsightsPanel, EmotionCorrelation chart, PeriodChart, natural language suggestions in pt-BR (348 tests) |
+| alpha.16 | 09/03/2026 | Search + advanced filters: search engine with filter prefixes (mod: emo: per: prio: tipo: tag: data:), full-text search (title+description+tags), relevance scoring, CommandPalette with filter chips, JournalView tag filter bar (392 tests) |

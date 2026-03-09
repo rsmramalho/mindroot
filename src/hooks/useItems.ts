@@ -41,7 +41,11 @@ export function useItems() {
     }
     if (filters.search) {
       const q = filters.search.toLowerCase();
-      result = result.filter((i) => i.title.toLowerCase().includes(q));
+      result = result.filter((i) =>
+        i.title.toLowerCase().includes(q) ||
+        i.description?.toLowerCase().includes(q) ||
+        i.tags?.some((t) => t.toLowerCase().includes(q))
+      );
     }
 
     return result;
