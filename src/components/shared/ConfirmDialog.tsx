@@ -65,6 +65,10 @@ export default function ConfirmDialog({
           {/* Dialog */}
           <motion.div
             className="relative rounded-xl"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="confirm-dialog-title"
+            aria-describedby={description ? 'confirm-dialog-desc' : undefined}
             style={{
               backgroundColor: '#1a1d24',
               border: '1px solid #a8947820',
@@ -78,6 +82,7 @@ export default function ConfirmDialog({
             transition={{ duration: 0.15, ease: 'easeOut' }}
           >
             <h3
+              id="confirm-dialog-title"
               style={{
                 fontFamily: '"Cormorant Garamond", serif',
                 fontSize: '18px',
@@ -91,6 +96,7 @@ export default function ConfirmDialog({
 
             {description && (
               <p
+                id="confirm-dialog-desc"
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '13px',

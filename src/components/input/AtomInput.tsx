@@ -24,6 +24,14 @@ export function AtomInput() {
   const { createItem } = useItemMutations();
   const { inputTooltipShown, setInputTooltipShown } = useOnboardingStore();
   const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup tooltip timer on unmount
+  useEffect(() => {
+    return () => {
+      if (tooltipTimerRef.current) clearTimeout(tooltipTimerRef.current);
+    };
+  }, []);
 
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const text = e.target.value;
@@ -143,12 +151,15 @@ export function AtomInput() {
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          aria-label="Adicionar item — digite e pressione Enter"
           onFocus={() => {
             setInputFocused(true);
             if (!inputTooltipShown) {
               setShowTooltip(true);
               setInputTooltipShown();
-              setTimeout(() => setShowTooltip(false), 4000);
+              const timer = setTimeout(() => setShowTooltip(false), 4000);
+              // Store for cleanup
+              tooltipTimerRef.current = timer;
             }
           }}
           onBlur={() => {
@@ -164,6 +175,7 @@ export function AtomInput() {
           <button
             onClick={handleSubmit}
             disabled={isSaving}
+            aria-label="Enviar"
             className="absolute right-2 top-1/2 -translate-y-1/2 text-mind hover:text-light text-sm font-mono px-2 py-1 transition-colors disabled:opacity-50"
           >
             {isSaving ? (

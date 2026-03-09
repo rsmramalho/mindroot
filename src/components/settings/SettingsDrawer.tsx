@@ -1,6 +1,7 @@
 // components/settings/SettingsDrawer.tsx — Settings overlay
 // Sign out, notifications, PWA install, about
 
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { usePWA } from '@/hooks/usePWA';
@@ -29,6 +30,33 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
     onClose();
   };
 
+  const drawerRef = useRef<HTMLDivElement>(null);
+
+  // Escape to close + focus trap
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'Tab' && drawerRef.current) {
+        const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [open, onClose]);
+
   return (
     <AnimatePresence>
       {open && (
@@ -44,7 +72,11 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
       }}
     >
       <motion.div
+        ref={drawerRef}
         className="h-full w-full max-w-xs overflow-y-auto"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Ajustes"
         style={{
           backgroundColor: '#1a1d24',
           borderLeft: '1px solid #a8947815',
@@ -71,6 +103,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
           </span>
           <button
             onClick={onClose}
+            aria-label="Fechar ajustes"
             style={{
               fontFamily: '"JetBrains Mono", monospace',
               fontSize: '16px',
@@ -234,7 +267,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               color: '#a8947825',
             }}
           >
-            MindRoot v1.0.0-alpha.12
+            MindRoot v1.0.0-alpha.17
           </span>
         </div>
       </motion.div>

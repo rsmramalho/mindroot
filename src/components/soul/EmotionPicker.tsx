@@ -91,7 +91,10 @@ function EmotionChip({
 
   return (
     <button
+      type="button"
       onClick={() => onSelect(emotion)}
+      aria-pressed={isSelected}
+      aria-label={`Emocao: ${emotion}`}
       className="transition-all duration-200"
       style={{
         fontFamily: 'Inter, sans-serif',

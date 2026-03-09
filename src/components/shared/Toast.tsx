@@ -11,6 +11,9 @@ export default function ToastContainer() {
 
   return (
     <div
+      role="region"
+      aria-live="polite"
+      aria-label="Notificacoes"
       className="fixed z-50 flex flex-col-reverse items-center gap-2 pointer-events-none"
       style={{
         bottom: '80px', // above BottomNav
@@ -136,6 +139,7 @@ function ToastItem({ toast }: { toast: ToastType }) {
         {/* Dismiss button */}
         <button
           onClick={() => dismiss(toast.id)}
+          aria-label="Fechar notificacao"
           className="flex-shrink-0 transition-opacity hover:opacity-80"
           style={{
             color: '#a8947850',

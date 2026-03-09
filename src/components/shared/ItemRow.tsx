@@ -2,7 +2,7 @@
 // Item row com ações: complete, edit inline, archive, delete
 // alpha.8: "..." button abre EditSheet, inline edit melhorado
 
-import { useState, useRef } from 'react';
+import { useState, useRef, memo } from 'react';
 import { format, isToday, isPast, startOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import ModuleBadge from './ModuleBadge';
@@ -23,7 +23,7 @@ interface ItemRowProps {
   compact?: boolean;
 }
 
-export default function ItemRow({
+function ItemRow({
   item,
   onComplete,
   onUncomplete,
@@ -105,6 +105,9 @@ export default function ItemRow({
         {/* Checkbox */}
         <button
           onClick={handleToggleComplete}
+          aria-label={isCompleted ? `Desmarcar: ${item.title}` : `Completar: ${item.title}`}
+          role="checkbox"
+          aria-checked={isCompleted}
           className="flex-shrink-0 flex items-center justify-center rounded-full border transition-all duration-200"
           style={{
             width: 20,
@@ -202,7 +205,8 @@ export default function ItemRow({
         {onOpenSheet && !isCompleted && (
           <button
             onClick={handleOpenSheet}
-            className="flex-shrink-0 flex items-center justify-center rounded transition-all duration-150 opacity-0 group-hover:opacity-100"
+            aria-label={`Editar detalhes: ${item.title}`}
+            className="flex-shrink-0 flex items-center justify-center rounded transition-all duration-150 opacity-40 group-hover:opacity-100 focus:opacity-100"
             style={{
               width: 24,
               height: 24,
@@ -212,7 +216,6 @@ export default function ItemRow({
               letterSpacing: '2px',
               backgroundColor: 'transparent',
             }}
-            title="Editar detalhes"
           >
             ···
           </button>
@@ -220,6 +223,7 @@ export default function ItemRow({
 
         {/* Expand indicator */}
         <span
+          aria-hidden="true"
           className="transition-transform duration-150"
           style={{
             color: '#a8947840',
@@ -378,3 +382,5 @@ function ActionBtn({
     </button>
   );
 }
+
+export default memo(ItemRow);

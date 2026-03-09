@@ -37,6 +37,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return (
         <div
+          role="alert"
           className="flex flex-col items-center justify-center py-16 px-6 gap-3"
           style={{ minHeight: '40vh' }}
         >

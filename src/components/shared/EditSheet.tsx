@@ -120,6 +120,9 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
           {/* Sheet */}
           <motion.div
             className="relative rounded-t-2xl overflow-y-auto"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Editar item"
             style={{
               backgroundColor: '#111318',
               border: '1px solid #a8947815',

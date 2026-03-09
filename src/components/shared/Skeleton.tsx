@@ -54,7 +54,7 @@ export function ItemRowSkeleton({ compact = false }: { compact?: boolean }) {
       />
       {/* Title */}
       <div className="flex-1 min-w-0">
-        <SkeletonBar width={`${55 + Math.random() * 30}%`} height={14} />
+        <SkeletonBar width="70%" height={14} />
       </div>
       {/* Module badge */}
       {!compact && <SkeletonBar width="32px" height={18} rounded="6px" />}
@@ -119,7 +119,7 @@ export function RitualHabitSkeleton() {
         />
         {/* Title + module */}
         <div className="flex-1 min-w-0 flex flex-col gap-1.5">
-          <SkeletonBar width={`${50 + Math.random() * 35}%`} height={16} />
+          <SkeletonBar width="65%" height={16} />
           <SkeletonBar width="40px" height={10} />
         </div>
       </div>
@@ -169,7 +169,7 @@ export function ListSkeleton({
           : ItemRowSkeleton;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" aria-busy="true" aria-label="Carregando...">
       {Array.from({ length: count }).map((_, i) => (
         <Component key={i} />
       ))}

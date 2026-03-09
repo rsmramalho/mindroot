@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0-alpha.16 — Search + advanced filters: CommandPalette with module/emotion/period/date/tag filters, full-text search, journal tag filter.
+v1.0.0-alpha.17 — M2 complete: QA polish, accessibility (ARIA), focus traps, performance (React.memo), bug fixes.
 
 ## Stack
 
@@ -172,3 +172,4 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.14 | 09/03/2026 | Energy cost UI: EnergyPicker (1-5 bar scale), EditSheet integration, ItemRow display, Analytics avgEnergy per module, #energy_N parsing token (329 tests) |
 | alpha.15 | 09/03/2026 | Analytics v2: insights engine (emotion-productivity correlation, period productivity, weekday patterns), InsightsPanel, EmotionCorrelation chart, PeriodChart, natural language suggestions in pt-BR (348 tests) |
 | alpha.16 | 09/03/2026 | Search + advanced filters: search engine with filter prefixes (mod: emo: per: prio: tipo: tag: data:), full-text search (title+description+tags), relevance scoring, CommandPalette with filter chips, JournalView tag filter bar (392 tests) |
+| alpha.17 | 09/03/2026 | M2 QA: accessibility (ARIA roles/labels on all dialogs, nav, buttons, live regions, focus traps), performance (React.memo ItemRow, deterministic skeletons, tooltip cleanup), bug fixes (version display, CheckInPrompt Escape, mobile "..." button), M2 milestone complete (392 tests) |

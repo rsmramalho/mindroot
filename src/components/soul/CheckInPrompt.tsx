@@ -2,6 +2,7 @@
 // Overlay que aparece ao completar task com check-in
 // Três fases: prompt → picking → result
 
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CheckInState } from '@/hooks/useSoul';
 import type { Emotion } from '@/types/item';
@@ -23,11 +24,27 @@ export default function CheckInPrompt({
   onSkip,
   onDismiss,
 }: CheckInPromptProps) {
+  // Close on Escape
+  useEffect(() => {
+    if (!state.active) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (state.phase === 'result') onDismiss();
+        else onSkip();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [state.active, state.phase, onDismiss, onSkip]);
+
   return (
     <AnimatePresence>
       {state.active && state.trigger && (
         <motion.div
           className="fixed inset-0 z-50 flex items-end justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Check-in emocional"
           style={{ backgroundColor: '#111318e0' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

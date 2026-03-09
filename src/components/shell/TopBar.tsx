@@ -27,6 +27,8 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
         <div className="flex items-center gap-2">
           {(!isOnline || pendingCount > 0) && (
             <div
+              role="status"
+              aria-live="polite"
               className="flex items-center gap-1.5 px-2 py-1 rounded-md"
               style={{
                 backgroundColor: isOnline ? '#c4a88215' : '#d4856a15',
@@ -50,6 +52,7 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
           )}
           <button
             onClick={onOpenSettings}
+            aria-label="Abrir ajustes"
             className="flex items-center justify-center transition-colors hover:opacity-80"
             style={{
               width: 32,
@@ -58,7 +61,6 @@ export function TopBar({ onOpenSettings }: TopBarProps) {
               backgroundColor: '#a8947808',
               border: '1px solid #a8947812',
             }}
-            title="Ajustes"
           >
             <span
               style={{

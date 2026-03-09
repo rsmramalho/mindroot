@@ -306,6 +306,11 @@ export default function CommandPalette() {
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Buscar ou filtrar... (mod: emo: per: tag:)"
+            role="combobox"
+            aria-label="Buscar itens, navegar ou filtrar"
+            aria-expanded={filtered.length > 0}
+            aria-autocomplete="list"
+            aria-controls="command-palette-list"
             className="flex-1 bg-transparent outline-none"
             style={{
               fontFamily: 'Inter, sans-serif',
@@ -353,7 +358,7 @@ export default function CommandPalette() {
         )}
 
         {/* Results */}
-        <div ref={listRef} style={{ maxHeight: '360px', overflowY: 'auto', padding: '6px' }}>
+        <div ref={listRef} id="command-palette-list" role="listbox" style={{ maxHeight: '360px', overflowY: 'auto', padding: '6px' }}>
           {filtered.length === 0 && (
             <div
               className="text-center py-6"

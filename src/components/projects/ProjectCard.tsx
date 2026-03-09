@@ -59,6 +59,11 @@ export default function ProjectCard({ data, onClick }: ProjectCardProps) {
       <div className="flex items-center gap-3">
         <div
           className="flex-1 rounded-full overflow-hidden"
+          role="progressbar"
+          aria-valuenow={progress}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label={`Progresso: ${completedTasks} de ${totalTasks} tarefas`}
           style={{ height: 3, backgroundColor: '#a8947815' }}
         >
           <div
