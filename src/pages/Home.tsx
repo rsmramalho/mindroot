@@ -16,6 +16,7 @@ import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import NotificationPrompt from '@/components/shared/NotificationPrompt';
 import { ListSkeleton } from '@/components/shared/Skeleton';
 import AiSuggestions from '@/components/dashboard/AiSuggestions';
+import { triggerAutoBackup } from '@/engine/export';
 
 export function HomePage() {
   const { items, isLoading } = useItems();
@@ -27,6 +28,11 @@ export function HomePage() {
   useEffect(() => {
     if (items.length > 0) updateItems(items);
   }, [items, updateItems]);
+
+  // Auto-backup: weekly download if due
+  useEffect(() => {
+    if (items.length > 0) triggerAutoBackup(items);
+  }, [items]);
 
   // Edit sheet state
   const [editingItem, setEditingItem] = useState<AtomItem | null>(null);

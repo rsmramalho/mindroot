@@ -7,6 +7,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePWA } from '@/hooks/usePWA';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useAppStore } from '@/store/app-store';
+import { useItems } from '@/hooks/useItems';
+import { exportJournalMarkdown, exportAllDataJson } from '@/engine/export';
 
 interface SettingsDrawerProps {
   open: boolean;
@@ -19,6 +21,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
   const { supported: notifSupported, enabled: notifEnabled, enable: enableNotif, disable: disableNotif, periodTransitions, overdueReminders, ritualReminders, pushSubscribed, permissionState, setPreference } =
     useNotifications();
   const navigate = useAppStore((s) => s.navigate);
+  const { items } = useItems();
 
   const handleSignOut = async () => {
     await signOut();
@@ -229,6 +232,26 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
             }}
           />
 
+          {/* Export & Backup */}
+          <SettingsItem
+            label="Exportar diario"
+            description="Baixar journal como Markdown (.md)"
+            onClick={() => exportJournalMarkdown(items)}
+          />
+          <SettingsItem
+            label="Backup completo"
+            description="Baixar todos os dados como JSON"
+            onClick={() => exportAllDataJson(items)}
+          />
+
+          <div
+            style={{
+              height: 1,
+              backgroundColor: '#a8947810',
+              margin: '8px 8px',
+            }}
+          />
+
           {/* Keyboard shortcut hint */}
           <SettingsItem
             label="Paleta de comandos"
@@ -267,7 +290,7 @@ export default function SettingsDrawer({ open, onClose }: SettingsDrawerProps) {
               color: '#a8947825',
             }}
           >
-            MindRoot v1.0.0-alpha.17
+            MindRoot v1.0.0-alpha.19
           </span>
         </div>
       </motion.div>
