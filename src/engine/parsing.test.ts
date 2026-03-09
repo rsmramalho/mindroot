@@ -145,4 +145,31 @@ describe('Parsing Engine v2', () => {
     const result = parseInput(raw);
     expect(result.context).toBe(raw);
   });
+
+  // ─── Energy cost ─────────────────────────────
+  it('detects #energy_3', () => {
+    const result = parseInput('Treino pesado #energy_3');
+    expect(result.energy_cost).toBe(3);
+  });
+
+  it('detects #energy_5 as max', () => {
+    const result = parseInput('Sprint final #energy_5 #mod_work');
+    expect(result.energy_cost).toBe(5);
+    expect(result.module).toBe('work');
+  });
+
+  it('detects #energy_1 as min', () => {
+    const result = parseInput('Ler artigo #energy_1');
+    expect(result.energy_cost).toBe(1);
+  });
+
+  it('returns null energy_cost when no token', () => {
+    const result = parseInput('Algo simples');
+    expect(result.energy_cost).toBeNull();
+  });
+
+  it('removes energy token from title', () => {
+    const result = parseInput('Tarefa pesada #energy_4');
+    expect(result.title).toBe('Tarefa pesada');
+  });
 });

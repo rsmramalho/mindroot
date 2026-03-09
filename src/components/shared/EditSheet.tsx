@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { AtomItem, UpdateItemPayload, ItemModule, ItemPriority } from '@/types/item';
 import ModulePicker from './ModulePicker';
 import PriorityPicker from './PriorityPicker';
+import EnergyPicker from './EnergyPicker';
 import RecurrencePicker from './RecurrencePicker';
 import TagChip from './TagChip';
 
@@ -23,6 +24,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
   const [priority, setPriority] = useState<ItemPriority | null>(null);
   const [dueDate, setDueDate] = useState('');
   const [recurrence, setRecurrence] = useState<string | null>(null);
+  const [energyCost, setEnergyCost] = useState<number | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [description, setDescription] = useState('');
@@ -36,6 +38,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
       setPriority(item.priority);
       setDueDate(item.due_date ? item.due_date.split('T')[0] : '');
       setRecurrence(item.recurrence || null);
+      setEnergyCost(item.energy_cost ?? null);
       setTags(item.tags || []);
       setDescription(item.description || '');
       setTimeout(() => titleRef.current?.focus(), 200);
@@ -68,6 +71,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
     if (JSON.stringify(tags) !== JSON.stringify(item.tags)) updates.tags = tags;
     if (description !== (item.description || '')) updates.description = description || null;
     if (recurrence !== (item.recurrence || null)) updates.recurrence = recurrence;
+    if (energyCost !== (item.energy_cost ?? null)) updates.energy_cost = energyCost;
 
     // Only save if something changed
     if (Object.keys(updates).length > 0) {
@@ -233,6 +237,9 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
 
               {/* Recurrence */}
               <RecurrencePicker value={recurrence} onChange={setRecurrence} />
+
+              {/* Energy Cost */}
+              <EnergyPicker value={energyCost} onChange={setEnergyCost} />
 
               {/* Due Date */}
               <div className="flex flex-col gap-1.5">

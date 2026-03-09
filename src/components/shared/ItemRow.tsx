@@ -265,6 +265,31 @@ export default function ItemRow({
             </div>
           )}
 
+          {/* Energy cost */}
+          {item.energy_cost !== null && (
+            <div
+              className="flex items-center gap-1.5 mb-2"
+              style={{ fontSize: '11px', color: '#d4856a', fontFamily: 'Inter, sans-serif' }}
+            >
+              <span className="flex items-end gap-[1px]">
+                {Array.from({ length: item.energy_cost }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="inline-block rounded-sm"
+                    style={{
+                      width: 2,
+                      height: 3 + i * 2,
+                      backgroundColor: '#d4856a',
+                    }}
+                  />
+                ))}
+              </span>
+              <span style={{ opacity: 0.7 }}>
+                energia {item.energy_cost}/5
+              </span>
+            </div>
+          )}
+
           {/* Emotion badge */}
           {item.emotion_before && (
             <div

@@ -50,6 +50,7 @@ export function mockParsedInput(overrides: Partial<ParsedInput> = {}): ParsedInp
     emotion_after: null,
     needs_checkin: false,
     is_chore: false,
+    energy_cost: null,
     due_date: null,
     due_time: null,
     ritual_period: null,

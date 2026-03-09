@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0-alpha.13 — M2 start: offline queue (IndexedDB), auto-sync on reconnect, TopBar connectivity indicator.
+v1.0.0-alpha.14 — Energy cost UI: EnergyPicker, EditSheet/ItemRow/Analytics integration, #energy_N parsing token.
 
 ## Stack
 
@@ -15,7 +15,7 @@ React 19 · TypeScript 5.8 · Vite 6 · Tailwind 3.4 · Supabase · TanStack Que
 ```bash
 npm run dev      # Dev server (port 5173)
 npm run build    # tsc -b && vite build
-npm test         # vitest (324 tests, 18 suites)
+npm test         # vitest (329 tests, 18 suites)
 npx tsc --noEmit # Type check only
 npx playwright test # E2E tests (69 tests, 10 specs)
 bash scripts/audit.sh  # Full system audit (20 checks)
@@ -77,7 +77,7 @@ supabase/        # Migrations, edge functions, seeds
 | Analytics | pages/Analytics.tsx | Heatmap, emotional pulse, module breakdown, streaks |
 | Auth | pages/Auth.tsx | Email/password + Google OAuth |
 
-## Components (46)
+## Components (47)
 
 - analytics/ (1): AnalyticsView
 - calendar/ (3): CalendarView, MonthGrid, DayDetail
@@ -89,7 +89,7 @@ supabase/        # Migrations, edge functions, seeds
 - projects/ (3): ProjectList, ProjectCard, ProjectSheet
 - ritual/ (3): RitualView, RitualHabit, RitualCheckIn
 - settings/ (1): SettingsDrawer
-- shared/ (16): CommandPalette, ConfirmDialog, EditSheet, EmptyState, ErrorBoundary, ItemRow, Logo, ModuleBadge, ModulePicker, NotificationPrompt, PriorityDot, PriorityPicker, RecurrencePicker, Skeleton, TagChip, Toast
+- shared/ (17): CommandPalette, ConfirmDialog, EditSheet, EmptyState, EnergyPicker, ErrorBoundary, ItemRow, Logo, ModuleBadge, ModulePicker, NotificationPrompt, PriorityDot, PriorityPicker, RecurrencePicker, Skeleton, TagChip, Toast
 - shell/ (3): AppShell, BottomNav, TopBar
 - soul/ (4): EmotionPicker, CheckInPrompt, PostCheckIn, SoulPulse
 
@@ -134,7 +134,7 @@ app-store (navigation, filters, soul state, user), ritual-store (period, check-i
 
 ## Tests
 
-- Unit: 324 tests, 18 suites (vitest)
+- Unit: 329 tests, 18 suites (vitest)
 - E2E: 69 tests, 10 specs (playwright)
 - Pattern: pure logic extraction, no React providers or Supabase mocks needed
 - Src LOC: ~14,681
@@ -169,3 +169,4 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.11 | 05/03/2026 | Push notifications: SW push handler, notification-store, push-service, period scheduling, overdue reminders, NotificationPrompt, granular settings (309 tests) |
 | alpha.12 | 09/03/2026 | M1 stabilization: AtomInput error recovery, toast parity (uncomplete/update), JournalPrompt stable prompt, BottomNav project-detail highlight, Google OAuth error handling, UI spelling fixes (309 tests) |
 | alpha.13 | 09/03/2026 | Offline queue: IndexedDB mutation queue, auto-sync on reconnect, queue compaction, last-write-wins conflict resolution, TopBar offline/pending indicator (324 tests) |
+| alpha.14 | 09/03/2026 | Energy cost UI: EnergyPicker (1-5 bar scale), EditSheet integration, ItemRow display, Analytics avgEnergy per module, #energy_N parsing token (329 tests) |

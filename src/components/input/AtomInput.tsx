@@ -103,6 +103,7 @@ export function AtomInput() {
         emotion_after: finalParsed.emotion_after,
         needs_checkin: finalParsed.needs_checkin,
         is_chore: finalParsed.is_chore,
+        energy_cost: finalParsed.energy_cost,
         due_date: finalParsed.due_date,
         due_time: finalParsed.due_time,
         ritual_period: finalParsed.ritual_period,

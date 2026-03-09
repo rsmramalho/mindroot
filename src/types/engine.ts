@@ -3,7 +3,7 @@ import type { Emotion, ItemType, ItemModule, ItemPriority, RitualPeriod } from '
 
 export type TokenType =
   | 'module' | 'priority' | 'emotion_before' | 'emotion_after'
-  | 'type' | 'chore' | 'needs_checkin' | 'temporal'
+  | 'type' | 'chore' | 'needs_checkin' | 'temporal' | 'energy'
   | 'ritual' | 'context' | 'library' | 'document' | 'unknown';
 
 export interface DetectedToken {
@@ -25,6 +25,7 @@ export interface ParsedInput {
   due_date: string | null;             // ISO string
   due_time: string | null;             // HH:mm
   ritual_period: RitualPeriod | null;
+  energy_cost: number | null;          // 1-5
   tags: string[];                      // tags não-sistema
   tokens: DetectedToken[];             // todos os tokens detectados
   context: string;                     // input original preservado

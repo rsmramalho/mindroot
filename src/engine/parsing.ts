@@ -29,6 +29,9 @@ const TOKEN_PATTERNS: { regex: RegExp; type: TokenType; extract: (m: RegExpMatch
   // Needs check-in
   { regex: /#needs_checkin\b/gi, type: 'needs_checkin', extract: () => 'true' },
 
+  // Energy cost: #energy_1 through #energy_5
+  { regex: /#energy_([1-5])\b/gi, type: 'energy', extract: m => m[1] },
+
   // Temporal: @hoje, @amanha, @semana
   { regex: /@(hoje|amanha|amanhã|semana|ritual|checkin)\b/gi, type: 'temporal', extract: m => m[1].toLowerCase().replace('ã', 'a') },
 
@@ -72,6 +75,7 @@ export function parseInput(raw: string): ParsedInput {
   const typeToken = tokens.find(t => t.type === 'type');
   const choreToken = tokens.find(t => t.type === 'chore');
   const checkinToken = tokens.find(t => t.type === 'needs_checkin');
+  const energyToken = tokens.find(t => t.type === 'energy');
   const temporalTokens = tokens.filter(t => t.type === 'temporal');
 
   // Resolve temporal
@@ -111,6 +115,7 @@ export function parseInput(raw: string): ParsedInput {
     emotion_after: emotionAfterToken ? (emotionAfterToken.value as Emotion) : null,
     needs_checkin,
     is_chore,
+    energy_cost: energyToken ? parseInt(energyToken.value, 10) : null,
     due_date,
     due_time,
     ritual_period,

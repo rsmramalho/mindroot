@@ -378,6 +378,21 @@ function ModuleBreakdown({ stats }: { stats: ModuleStats[] }) {
               >
                 {completionRate}%
               </span>
+              {stat.avgEnergy !== null && (
+                <span
+                  title={`Energia media: ${stat.avgEnergy}/5`}
+                  style={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: '9px',
+                    color: '#d4856a80',
+                    flexShrink: 0,
+                    width: 28,
+                    textAlign: 'right',
+                  }}
+                >
+                  {stat.avgEnergy}e
+                </span>
+              )}
             </div>
           );
         })}
