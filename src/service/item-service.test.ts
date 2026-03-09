@@ -1,5 +1,17 @@
 // service/item-service.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// ━━━ Mock offline store (always online in these tests) ━━━
+vi.mock('@/store/offline-store', () => ({
+  useOfflineStore: {
+    getState: () => ({ isOnline: true, pendingCount: 0, setPendingCount: vi.fn() }),
+  },
+}));
+
+vi.mock('@/engine/offline-queue', () => ({
+  enqueue: vi.fn(),
+}));
+
 import { itemService } from './item-service';
 
 // ━━━ Mock Supabase ━━━

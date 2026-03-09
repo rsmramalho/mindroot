@@ -10,3 +10,14 @@ dist
 test-results/
 playwright-report/
 blob-report/
+
+# Archive
+_misc/
+
+# Misc files
+*.zip
+*.pptx
+*.docx
+*.avif
+*.pdf
+!public/**
