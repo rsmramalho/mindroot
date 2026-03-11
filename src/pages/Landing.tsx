@@ -92,7 +92,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: '#111318', display: 'flex', flexDirection: 'column' }}>
       {/* Hero — full viewport */}
-      <section style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 32px', textAlign: 'center' }}>
+      <section style={{ position: 'relative', minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', paddingTop: '80px', paddingBottom: '64px', paddingLeft: '32px', paddingRight: '32px', textAlign: 'center' }}>
         <BackgroundOrb />
         <motion.div
           variants={stagger.container}
@@ -128,13 +128,15 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           >
             <button
               onClick={onLogin}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 500, color: '#111318', backgroundColor: '#c4a882', border: 'none', borderRadius: '8px', padding: '13px 48px', cursor: 'pointer', letterSpacing: '0.03em' }}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 500, color: '#111318', backgroundColor: '#b8976e', border: 'none', borderRadius: '4px', padding: '13px 48px', cursor: 'pointer', letterSpacing: '0.03em' }}
             >
               Comecar agora
             </button>
             <button
               onClick={onLogin}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 400, color: '#a8947858', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.02em', padding: '4px' }}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 400, color: '#a8947870', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.02em', padding: '4px' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#c4a882')}
+              onMouseLeave={e => (e.currentTarget.style.color = '#a8947870')}
             >
               Ja tenho conta
             </button>
@@ -145,7 +147,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 1 }}
-          style={{ position: 'absolute', bottom: '32px', left: '50%', transform: 'translateX(-50%)' }}
+          style={{ alignSelf: 'center', marginTop: 'auto' }}
         >
           <motion.div
             animate={{ y: [0, 6, 0] }}
@@ -189,7 +191,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           viewport={{ once: true }}
           transition={{ duration: 0.7, delay: 0.15 }}
           onClick={onLogin}
-          style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 500, color: '#111318', backgroundColor: '#c4a882', border: 'none', borderRadius: '8px', padding: '13px 48px', cursor: 'pointer', letterSpacing: '0.03em' }}
+          style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 500, color: '#111318', backgroundColor: '#b8976e', border: 'none', borderRadius: '4px', padding: '13px 48px', cursor: 'pointer', letterSpacing: '0.03em' }}
         >
           Criar conta gratuita
         </motion.button>
