@@ -4,7 +4,7 @@ Emotional productivity system. Emotion precedes action, reflection closes the lo
 
 ## Version
 
-v1.0.0-alpha.25 — Landing page editorial redesign: hero full viewport, períodos Aurora/Zenite/Crepúsculo, orb animado.
+v1.0.0-alpha.25.1 — Landing polish: hero spacing, botão #b8976e, scroll hint refinement.
 
 ## Stack
 
@@ -184,6 +184,7 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.23 | 10/03/2026 | Landing melhorada (subtitulo, app mockup, exemplos concretos nos cards), OnboardingWizard 3 passos (nome + area foco, periodos rituais, primeira entrada) (467 tests) |
 | alpha.24 | 11/03/2026 | Bug fixes: Google OAuth PKCE race condition (removed synchronous replaceState, Supabase reads ?code before cleanup), logout→landing via useLayoutEffect, per-user onboarding store (new users on shared devices get wizard) (467 tests) |
 | alpha.25 | 11/03/2026 | Landing page editorial redesign — hero full viewport, períodos Aurora/Zenite/Crepúsculo, orb animado (467 tests) |
+| alpha.25.1 | 11/03/2026 | Landing polish — hero spacing, botão #b8976e, scroll hint refinement, remove hover re-renders (467 tests) |
 
 ## Google OAuth Setup (manual)
 

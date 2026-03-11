@@ -134,9 +134,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
             </button>
             <button
               onClick={onLogin}
-              style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 400, color: '#a8947870', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.02em', padding: '4px' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#c4a882')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#a8947870')}
+              style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 400, color: '#a8947865', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.02em', padding: '4px' }}
             >
               Ja tenho conta
             </button>
@@ -147,7 +145,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 1 }}
-          style={{ alignSelf: 'center', marginTop: 'auto' }}
+          style={{ alignSelf: 'center', paddingTop: '32px' }}
         >
           <motion.div
             animate={{ y: [0, 6, 0] }}
