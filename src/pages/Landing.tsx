@@ -145,12 +145,12 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.8, duration: 1 }}
-          style={{ alignSelf: 'center', paddingTop: '32px' }}
+          style={{ marginTop: 'auto', paddingBottom: '40px', display: 'flex', justifyContent: 'center' }}
         >
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ width: 1, height: 32, backgroundColor: '#a8947828' }}
+            style={{ width: 1, height: 32, backgroundColor: '#a8947840' }}
           />
         </motion.div>
       </section>
