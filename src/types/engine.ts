@@ -1,5 +1,5 @@
 // types/engine.ts — Parsing Engine + Soul Engine types
-import type { Emotion, ItemType, ItemModule, ItemPriority, RitualPeriod } from './item';
+import type { Emotion, AtomType, AtomModule, Priority, RitualSlot } from './item';
 
 export type TokenType =
   | 'module' | 'priority' | 'emotion_before' | 'emotion_after'
@@ -15,16 +15,16 @@ export interface DetectedToken {
 
 export interface ParsedInput {
   title: string;                       // texto limpo, sem tokens
-  type: ItemType;
-  module: ItemModule | null;
-  priority: ItemPriority | null;
+  type: AtomType;
+  module: AtomModule | null;
+  priority: Priority | null;
   emotion_before: Emotion | null;
   emotion_after: Emotion | null;
   needs_checkin: boolean;
   is_chore: boolean;
   due_date: string | null;             // ISO string
   due_time: string | null;             // HH:mm
-  ritual_period: RitualPeriod | null;
+  ritual_period: RitualSlot | null;
   energy_cost: number | null;          // 1-5
   tags: string[];                      // tags não-sistema
   tokens: DetectedToken[];             // todos os tokens detectados

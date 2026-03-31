@@ -24,10 +24,10 @@ describe('journalToMarkdown', () => {
     expect(journalToMarkdown([])).toBe('');
   });
 
-  it('includes journal entries', () => {
+  it('includes log entries', () => {
     const items = [
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Hoje foi um bom dia',
         created_at: '2026-03-09T10:30:00.000Z',
       }),
@@ -54,10 +54,9 @@ describe('journalToMarkdown', () => {
   it('includes emotion metadata', () => {
     const items = [
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Reflexao da tarde',
-        emotion_before: 'ansioso',
-        emotion_after: 'calmo',
+        body: { soul: { emotion_before: 'ansioso', emotion_after: 'calmo', energy_level: null, needs_checkin: false, ritual_slot: null } },
         created_at: '2026-03-09T15:00:00.000Z',
       }),
     ];
@@ -69,7 +68,7 @@ describe('journalToMarkdown', () => {
   it('includes module and tags', () => {
     const items = [
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Nota de trabalho',
         module: 'work',
         tags: ['foco', 'projeto'],
@@ -81,12 +80,12 @@ describe('journalToMarkdown', () => {
     expect(md).toContain('tags: foco, projeto');
   });
 
-  it('includes description', () => {
+  it('includes notes', () => {
     const items = [
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Titulo',
-        description: 'Corpo detalhado da entrada',
+        notes: 'Corpo detalhado da entrada',
         created_at: '2026-03-09T11:00:00.000Z',
       }),
     ];
@@ -97,14 +96,14 @@ describe('journalToMarkdown', () => {
   it('excludes archived items', () => {
     const items = [
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Visivel',
         created_at: '2026-03-09T10:00:00.000Z',
       }),
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Arquivado',
-        archived: true,
+        status: 'archived',
         created_at: '2026-03-09T11:00:00.000Z',
       }),
     ];
@@ -116,12 +115,12 @@ describe('journalToMarkdown', () => {
   it('groups entries by date', () => {
     const items = [
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Dia 1',
         created_at: '2026-03-08T10:00:00.000Z',
       }),
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Dia 2',
         created_at: '2026-03-09T10:00:00.000Z',
       }),
@@ -135,12 +134,12 @@ describe('journalToMarkdown', () => {
   it('sorts entries newest first', () => {
     const items = [
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Antigo',
         created_at: '2026-03-07T10:00:00.000Z',
       }),
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Recente',
         created_at: '2026-03-09T10:00:00.000Z',
       }),
@@ -156,7 +155,7 @@ describe('journalToMarkdown', () => {
       mockItem({ type: 'task', title: 'Tarefa qualquer' }),
       mockItem({ type: 'habit', title: 'Habito' }),
       mockItem({
-        type: 'journal',
+        type: 'log',
         title: 'Diario real',
         created_at: '2026-03-09T10:00:00.000Z',
       }),
@@ -189,8 +188,8 @@ describe('itemsToBackupJson', () => {
 
   it('excludes archived items by default', () => {
     const items = [
-      mockItem({ archived: false }),
-      mockItem({ archived: true }),
+      mockItem({ status: 'active' }),
+      mockItem({ status: 'archived' }),
     ];
     const parsed = JSON.parse(itemsToBackupJson(items)) as BackupPayload;
     expect(parsed.items).toHaveLength(1);
@@ -199,8 +198,8 @@ describe('itemsToBackupJson', () => {
 
   it('includes archived when option set', () => {
     const items = [
-      mockItem({ archived: false }),
-      mockItem({ archived: true }),
+      mockItem({ status: 'active' }),
+      mockItem({ status: 'archived' }),
     ];
     const parsed = JSON.parse(
       itemsToBackupJson(items, { includeArchived: true })
@@ -213,17 +212,16 @@ describe('itemsToBackupJson', () => {
     const item = mockItem({
       title: 'Test',
       module: 'work',
-      emotion_before: 'focado',
       tags: ['a', 'b'],
-      energy_cost: 3,
+      body: { soul: { emotion_before: 'focado', emotion_after: null, energy_level: 'medium', needs_checkin: false, ritual_slot: null } },
     });
     const parsed = JSON.parse(itemsToBackupJson([item])) as BackupPayload;
     const exported = parsed.items[0];
     expect(exported.title).toBe('Test');
     expect(exported.module).toBe('work');
-    expect(exported.emotion_before).toBe('focado');
     expect(exported.tags).toEqual(['a', 'b']);
-    expect(exported.energy_cost).toBe(3);
+    expect((exported.body?.soul as any)?.emotion_before).toBe('focado');
+    expect((exported.body?.soul as any)?.energy_level).toBe('medium');
   });
 
   it('handles empty array', () => {

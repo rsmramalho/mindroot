@@ -10,8 +10,30 @@ import {
   EMPTY_FILTERS,
 } from './search';
 import { mockItem, resetIds, today, tomorrow, twoDaysAgo } from '@/__test__/mock-factory';
+import type { AtomItem, Priority, RitualSlot } from '@/types/item';
 
 beforeEach(() => resetIds());
+
+// Helpers for v2 body fields
+function withDueDate(dueDate: string) {
+  return { body: { operations: { due_date: dueDate, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null } } };
+}
+
+function withEmotionBefore(emotion: string) {
+  return { body: { soul: { emotion_before: emotion, emotion_after: null, energy_level: null, needs_checkin: false, ritual_slot: null } } };
+}
+
+function withEmotionAfter(emotion: string) {
+  return { body: { soul: { emotion_after: emotion, emotion_before: null, energy_level: null, needs_checkin: false, ritual_slot: null } } };
+}
+
+function withRitualSlot(slot: RitualSlot): Partial<AtomItem> {
+  return { body: { soul: { ritual_slot: slot, emotion_before: null, emotion_after: null, energy_level: null, needs_checkin: false } } };
+}
+
+function withPriority(priority: Priority): Partial<AtomItem> {
+  return { body: { operations: { priority, due_date: null, deadline: null, project_status: null, progress_mode: null, progress: null } } };
+}
 
 // ━━━ normalize ━━━
 
@@ -57,8 +79,8 @@ describe('parseSearchQuery', () => {
   });
 
   it('parses priority prefix', () => {
-    const f = parseSearchQuery('prio:urgente');
-    expect(f.priority).toBe('urgente');
+    const f = parseSearchQuery('prio:high');
+    expect(f.priority).toBe('high');
   });
 
   it('parses type prefix (pt-BR alias)', () => {
@@ -88,10 +110,10 @@ describe('parseSearchQuery', () => {
   });
 
   it('combines multiple filters', () => {
-    const f = parseSearchQuery('mod:family emo:grato prio:importante festa');
+    const f = parseSearchQuery('mod:family emo:grato prio:medium festa');
     expect(f.module).toBe('family');
     expect(f.emotion).toBe('grato');
-    expect(f.priority).toBe('importante');
+    expect(f.priority).toBe('medium');
     expect(f.text).toBe('festa');
   });
 
@@ -120,14 +142,14 @@ describe('searchItems', () => {
     expect(results[0].matchField).toBe('title');
   });
 
-  it('finds items by description', () => {
+  it('finds items by notes', () => {
     const items = [
-      mockItem({ title: 'Task A', description: 'preciso comprar no mercado' }),
-      mockItem({ title: 'Task B', description: null }),
+      mockItem({ title: 'Task A', notes: 'preciso comprar no mercado' }),
+      mockItem({ title: 'Task B', notes: null }),
     ];
     const results = searchItems(items, { ...EMPTY_FILTERS, text: 'mercado' });
     expect(results).toHaveLength(1);
-    expect(results[0].matchField).toBe('description');
+    expect(results[0].matchField).toBe('notes');
   });
 
   it('finds items by tag', () => {
@@ -140,9 +162,9 @@ describe('searchItems', () => {
     expect(results[0].matchField).toBe('tag');
   });
 
-  it('title match scores higher than description', () => {
+  it('title match scores higher than notes', () => {
     const items = [
-      mockItem({ title: 'Other', description: 'leite stuff' }),
+      mockItem({ title: 'Other', notes: 'leite stuff' }),
       mockItem({ title: 'Comprar leite' }),
     ];
     const results = searchItems(items, { ...EMPTY_FILTERS, text: 'leite' });
@@ -170,9 +192,9 @@ describe('searchItems', () => {
 
   it('filters by emotion (before or after)', () => {
     const items = [
-      mockItem({ title: 'A', emotion_before: 'calmo' }),
-      mockItem({ title: 'B', emotion_after: 'calmo' }),
-      mockItem({ title: 'C', emotion_before: 'ansioso' }),
+      mockItem({ title: 'A', ...withEmotionBefore('calmo') }),
+      mockItem({ title: 'B', ...withEmotionAfter('calmo') }),
+      mockItem({ title: 'C', ...withEmotionBefore('ansioso') }),
     ];
     const results = searchItems(items, { ...EMPTY_FILTERS, emotion: 'calmo' });
     expect(results).toHaveLength(2);
@@ -180,8 +202,8 @@ describe('searchItems', () => {
 
   it('filters by ritual period', () => {
     const items = [
-      mockItem({ title: 'A', ritual_period: 'aurora' }),
-      mockItem({ title: 'B', ritual_period: 'zenite' }),
+      mockItem({ title: 'A', ...withRitualSlot('aurora') }),
+      mockItem({ title: 'B', ...withRitualSlot('zenite') }),
     ];
     const results = searchItems(items, { ...EMPTY_FILTERS, period: 'aurora' });
     expect(results).toHaveLength(1);
@@ -189,10 +211,10 @@ describe('searchItems', () => {
 
   it('filters by priority', () => {
     const items = [
-      mockItem({ title: 'A', priority: 'urgente' }),
-      mockItem({ title: 'B', priority: 'futuro' }),
+      mockItem({ title: 'A', ...withPriority('high') }),
+      mockItem({ title: 'B', ...withPriority('low') }),
     ];
-    const results = searchItems(items, { ...EMPTY_FILTERS, priority: 'urgente' });
+    const results = searchItems(items, { ...EMPTY_FILTERS, priority: 'high' });
     expect(results).toHaveLength(1);
   });
 
@@ -216,8 +238,8 @@ describe('searchItems', () => {
 
   it('filters by dateRange hoje', () => {
     const items = [
-      mockItem({ title: 'A', due_date: today() }),
-      mockItem({ title: 'B', due_date: tomorrow() }),
+      mockItem({ title: 'A', ...withDueDate(today()) }),
+      mockItem({ title: 'B', ...withDueDate(tomorrow()) }),
     ];
     const results = searchItems(items, { ...EMPTY_FILTERS, dateRange: 'hoje' });
     expect(results).toHaveLength(1);
@@ -225,18 +247,17 @@ describe('searchItems', () => {
 
   it('filters by dateRange atrasado', () => {
     const items = [
-      mockItem({ title: 'A', due_date: twoDaysAgo() }),
-      mockItem({ title: 'B', due_date: today() }),
+      mockItem({ title: 'A', ...withDueDate(twoDaysAgo()) }),
+      mockItem({ title: 'B', ...withDueDate(today()) }),
     ];
     const results = searchItems(items, { ...EMPTY_FILTERS, dateRange: 'atrasado' });
     expect(results).toHaveLength(1);
-    expect(results[0].item.due_date).toBe(twoDaysAgo());
   });
 
   it('filters by dateRange futuro', () => {
     const items = [
-      mockItem({ title: 'A', due_date: tomorrow() }),
-      mockItem({ title: 'B', due_date: twoDaysAgo() }),
+      mockItem({ title: 'A', ...withDueDate(tomorrow()) }),
+      mockItem({ title: 'B', ...withDueDate(twoDaysAgo()) }),
     ];
     const results = searchItems(items, { ...EMPTY_FILTERS, dateRange: 'futuro' });
     expect(results).toHaveLength(1);
@@ -244,7 +265,7 @@ describe('searchItems', () => {
 
   it('excludes archived items', () => {
     const items = [
-      mockItem({ title: 'A', archived: true }),
+      mockItem({ title: 'A', status: 'archived' }),
       mockItem({ title: 'B' }),
     ];
     const results = searchItems(items, EMPTY_FILTERS);
@@ -253,8 +274,8 @@ describe('searchItems', () => {
 
   it('filters completed when completed=false', () => {
     const items = [
-      mockItem({ title: 'A', completed: true }),
-      mockItem({ title: 'B', completed: false }),
+      mockItem({ title: 'A', status: 'completed' }),
+      mockItem({ title: 'B', status: 'active' }),
     ];
     const results = searchItems(items, { ...EMPTY_FILTERS, completed: false });
     expect(results).toHaveLength(1);

@@ -1,4 +1,4 @@
-// __test__/mock-factory.ts — Shared mock factory for tests
+// __test__/mock-factory.ts — Shared mock factory for tests (Schema v2)
 import type { AtomItem } from '@/types/item';
 import type { ParsedInput } from '@/types/engine';
 import { format, subDays, addDays } from 'date-fns';
@@ -17,25 +17,18 @@ export function mockItem(overrides: Partial<AtomItem> = {}): AtomItem {
     title: 'Test item',
     type: 'task',
     module: null,
-    priority: null,
     tags: [],
-    parent_id: null,
-    completed: false,
-    completed_at: null,
-    archived: false,
-    due_date: null,
-    due_time: null,
-    recurrence: null,
-    ritual_period: null,
-    emotion_before: null,
-    emotion_after: null,
-    needs_checkin: false,
-    is_chore: false,
-    energy_cost: null,
-    description: null,
-    context: null,
+    status: 'active',
+    state: 'inbox',
+    genesis_stage: 1,
+    project_id: null,
+    naming_convention: null,
+    notes: null,
+    body: {},
+    source: 'mindroot',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    created_by: null,
     ...overrides,
   };
 }

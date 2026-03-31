@@ -60,9 +60,9 @@ export default function ShareReflectionSheet({ item, onClose }: ShareReflectionS
 
     const contentData: SharedReflectionData = {
       title: item.title,
-      description: item.description || null,
-      emotion_before: item.emotion_before || null,
-      emotion_after: item.emotion_after || null,
+      description: item.notes || null,
+      emotion_before: item.body.soul?.emotion_before || null,
+      emotion_after: item.body.soul?.emotion_after || null,
       module: item.module,
       created_at: item.created_at,
       include_date: includeDate,

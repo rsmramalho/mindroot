@@ -57,9 +57,6 @@ beforeEach(() => {
 
 // Helper to set chain resolution
 function resolveChain(data: any, error: any = null) {
-  // For list: .from().select().eq().eq().order()
-  // For single: .from().select().eq().single()
-  // etc. All return the chain, and the final call resolves
   mockChain.order.mockResolvedValue({ data, error });
   mockChain.single.mockResolvedValue({ data, error });
   mockChain.eq.mockReturnValue(mockChain);
@@ -75,25 +72,18 @@ describe('itemService.list', () => {
         title: 'Test',
         type: 'task',
         module: 'work',
-        priority: null,
         tags: ['tag1'],
-        parent_id: null,
-        completed: false,
-        completed_at: null,
-        archived: false,
-        due_date: '2025-06-15',
-        due_time: null,
-        recurrence: null,
-        ritual_period: null,
-        emotion_before: null,
-        emotion_after: null,
-        needs_checkin: false,
-        is_chore: false,
-        energy_cost: null,
-        description: null,
-        context: null,
+        status: 'active',
+        state: 'inbox',
+        genesis_stage: 1,
+        project_id: null,
+        naming_convention: null,
+        notes: null,
+        body: {},
+        source: 'mindroot',
         created_at: '2025-06-01T00:00:00Z',
         updated_at: '2025-06-01T00:00:00Z',
+        created_by: null,
       },
     ];
     resolveChain(rows);
@@ -119,81 +109,30 @@ describe('itemService.list', () => {
 });
 
 describe('itemService.update', () => {
-  it('throws when trying to complete a reflection', async () => {
-    await expect(
-      itemService.update('i1', { completed: true, type: 'reflection' })
-    ).rejects.toThrow('Reflections cannot be completed');
-  });
-});
-
-describe('itemService.complete', () => {
-  it('calls update with completed=true and completed_at', async () => {
+  it('updates item fields', async () => {
     const mockData = {
       id: 'i1',
       user_id: 'u1',
-      title: 'Done',
+      title: 'Updated',
       type: 'task',
-      completed: true,
-      completed_at: '2025-06-01T12:00:00Z',
-      archived: false,
-      tags: [],
-      parent_id: null,
       module: null,
-      priority: null,
-      due_date: null,
-      due_time: null,
-      recurrence: null,
-      ritual_period: null,
-      emotion_before: null,
-      emotion_after: null,
-      needs_checkin: false,
-      is_chore: false,
-      energy_cost: null,
-      description: null,
-      context: null,
+      tags: [],
+      status: 'active',
+      state: 'inbox',
+      genesis_stage: 1,
+      project_id: null,
+      naming_convention: null,
+      notes: null,
+      body: {},
+      source: 'mindroot',
       created_at: '2025-06-01T00:00:00Z',
       updated_at: '2025-06-01T12:00:00Z',
+      created_by: null,
     };
     resolveChain(mockData);
 
-    const result = await itemService.complete('i1');
-    expect(result.completed).toBe(true);
-  });
-});
-
-describe('itemService.uncomplete', () => {
-  it('calls update with completed=false and completed_at=null', async () => {
-    const mockData = {
-      id: 'i1',
-      user_id: 'u1',
-      title: 'Undone',
-      type: 'task',
-      completed: false,
-      completed_at: null,
-      archived: false,
-      tags: [],
-      parent_id: null,
-      module: null,
-      priority: null,
-      due_date: null,
-      due_time: null,
-      recurrence: null,
-      ritual_period: null,
-      emotion_before: null,
-      emotion_after: null,
-      needs_checkin: false,
-      is_chore: false,
-      energy_cost: null,
-      description: null,
-      context: null,
-      created_at: '2025-06-01T00:00:00Z',
-      updated_at: '2025-06-01T12:00:00Z',
-    };
-    resolveChain(mockData);
-
-    const result = await itemService.uncomplete('i1');
-    expect(result.completed).toBe(false);
-    expect(result.completed_at).toBeNull();
+    const result = await itemService.update('i1', { title: 'Updated' });
+    expect(result.title).toBe('Updated');
   });
 });
 

@@ -2,7 +2,7 @@
 // Engine de filtros avançados — lógica pura, sem React
 // Filtra e agrupa AtomItems para o Dashboard
 
-import type { AtomItem } from '@/types/item';
+import type { AtomItem, Priority, OperationsExtension } from '@/types/item';
 import { isToday, isPast, isFuture, startOfDay, isThisWeek } from 'date-fns';
 
 // ━━━ Types ━━━
@@ -34,10 +34,9 @@ export interface GroupedItems {
 // ━━━ Constants ━━━
 
 const PRIORITY_ORDER: Record<string, number> = {
-  urgente: 0,
-  importante: 1,
-  manutencao: 2,
-  futuro: 3,
+  high: 0,
+  medium: 1,
+  low: 2,
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -46,8 +45,9 @@ const MODULE_LABELS: Record<string, string> = {
   family: 'Família',
   body: 'Corpo',
   mind: 'Mente',
-  soul: 'Alma',
-  home: 'Casa',
+  bridge: 'Ponte',
+  finance: 'Finanças',
+  social: 'Social',
 };
 
 const MODULE_COLORS: Record<string, string> = {
@@ -56,39 +56,50 @@ const MODULE_COLORS: Record<string, string> = {
   family: '#d4856a',
   body: '#b8c4a8',
   mind: '#a89478',
-  soul: '#8a6e5a',
-  home: '#a89478',
+  bridge: '#8a8a8a',
+  finance: '#7a9e8a',
+  social: '#9e7a8a',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
-  urgente: 'Urgente',
-  importante: 'Importante',
-  manutencao: 'Manutenção',
-  futuro: 'Futuro',
+  high: 'Alta',
+  medium: 'Média',
+  low: 'Baixa',
 };
+
+// ━━━ Helpers ━━━
+
+function getItemPriority(item: AtomItem): Priority | undefined {
+  return (item.body?.operations as OperationsExtension | undefined)?.priority ?? undefined;
+}
+
+function getItemDueDate(item: AtomItem): string | undefined {
+  return (item.body?.operations as OperationsExtension | undefined)?.due_date ?? undefined;
+}
 
 // ━━━ Core Filters ━━━
 
 export function filterItems(items: AtomItem[], filters: DashboardFilters): AtomItem[] {
   return items.filter((item) => {
     // Completed
-    if (!filters.showCompleted && item.completed) return false;
+    if (!filters.showCompleted && item.status === 'completed') return false;
 
     // Archived
-    if (!filters.showArchived && item.archived) return false;
+    if (!filters.showArchived && item.status === 'archived') return false;
 
     // Module
     if (filters.module && item.module !== filters.module) return false;
 
     // Priority
-    if (filters.priority && item.priority !== filters.priority) return false;
+    if (filters.priority && getItemPriority(item) !== filters.priority) return false;
 
     // Type
     if (filters.type && item.type !== filters.type) return false;
 
     // Date range
     if (filters.dateRange && filters.dateRange !== 'all') {
-      const due = item.due_date ? new Date(item.due_date) : null;
+      const dueDate = getItemDueDate(item);
+      const due = dueDate ? new Date(dueDate) : null;
 
       switch (filters.dateRange) {
         case 'today':
@@ -124,13 +135,15 @@ export function sortItems(items: AtomItem[], sortBy: SortBy = 'due_date', dir: S
   const sorted = [...items].sort((a, b) => {
     switch (sortBy) {
       case 'due_date': {
-        const da = a.due_date ? new Date(a.due_date).getTime() : Infinity;
-        const db = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+        const dueA = getItemDueDate(a);
+        const dueB = getItemDueDate(b);
+        const da = dueA ? new Date(dueA).getTime() : Infinity;
+        const db = dueB ? new Date(dueB).getTime() : Infinity;
         return da - db;
       }
       case 'priority': {
-        const pa = PRIORITY_ORDER[a.priority || ''] ?? 99;
-        const pb = PRIORITY_ORDER[b.priority || ''] ?? 99;
+        const pa = PRIORITY_ORDER[getItemPriority(a) || ''] ?? 99;
+        const pb = PRIORITY_ORDER[getItemPriority(b) || ''] ?? 99;
         return pa - pb;
       }
       case 'created_at': {
@@ -166,13 +179,14 @@ export function groupItems(items: AtomItem[], groupBy: GroupBy = 'none'): Groupe
         key = item.module || '_sem_modulo';
         break;
       case 'priority':
-        key = item.priority || '_sem_prioridade';
+        key = getItemPriority(item) || '_sem_prioridade';
         break;
       case 'type':
         key = item.type || 'task';
         break;
       case 'date': {
-        const due = item.due_date ? new Date(item.due_date) : null;
+        const dueDate = getItemDueDate(item);
+        const due = dueDate ? new Date(dueDate) : null;
         if (!due) key = '_sem_data';
         else if (isPast(startOfDay(due)) && !isToday(due)) key = '_atrasado';
         else if (isToday(due)) key = '_hoje';
@@ -222,39 +236,42 @@ function getGroupLabel(key: string, groupBy: GroupBy): string {
 
 export function getOverdueItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed || item.archived) return false;
-    if (!item.due_date) return false;
-    const due = new Date(item.due_date);
+    if (item.status === 'completed' || item.status === 'archived') return false;
+    const dueDate = getItemDueDate(item);
+    if (!dueDate) return false;
+    const due = new Date(dueDate);
     return isPast(startOfDay(due)) && !isToday(due);
   });
 }
 
 export function getTodayItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed || item.archived) return false;
-    if (!item.due_date) return false;
-    return isToday(new Date(item.due_date));
+    if (item.status === 'completed' || item.status === 'archived') return false;
+    const dueDate = getItemDueDate(item);
+    if (!dueDate) return false;
+    return isToday(new Date(dueDate));
   });
 }
 
 export function getFocusItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed || item.archived) return false;
-    return item.priority === 'urgente' || item.priority === 'importante';
+    if (item.status === 'completed' || item.status === 'archived') return false;
+    const priority = getItemPriority(item);
+    return priority === 'high';
   });
 }
 
 export function getInboxItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed || item.archived) return false;
+    if (item.status === 'completed' || item.status === 'archived') return false;
     return !item.module;
   });
 }
 
 export function getChoreItems(items: AtomItem[]): AtomItem[] {
   return items.filter((item) => {
-    if (item.completed || item.archived) return false;
-    return item.is_chore;
+    if (item.status === 'completed' || item.status === 'archived') return false;
+    return item.tags?.includes('chore') || item.tags?.includes('#chore');
   });
 }
 

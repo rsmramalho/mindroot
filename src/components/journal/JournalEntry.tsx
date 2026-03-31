@@ -1,5 +1,5 @@
 // components/journal/JournalEntry.tsx — Individual journal entry
-// Shows emotion flow, title, description, tags, and context
+// Shows emotion flow, title, notes, tags, and ritual slot
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,8 +17,11 @@ export default function JournalEntry({ item }: JournalEntryProps) {
   const [showShare, setShowShare] = useState(false);
 
   const isReflection = item.type === 'reflection';
-  const hasDescription = !!item.description;
+  const hasNotes = !!item.notes;
   const time = format(parseISO(item.created_at), 'HH:mm');
+  const emotionBefore = item.body.soul?.emotion_before;
+  const emotionAfter = item.body.soul?.emotion_after;
+  const ritualSlot = item.body.soul?.ritual_slot;
 
   return (
     <motion.div
@@ -70,16 +73,16 @@ export default function JournalEntry({ item }: JournalEntryProps) {
 
             {/* Emotion flow */}
             <div className="flex items-center gap-2 mt-1.5">
-              {item.emotion_before && (
+              {emotionBefore && (
                 <>
-                  <EmotionDot emotion={item.emotion_before} />
-                  {item.emotion_after && (
+                  <EmotionDot emotion={emotionBefore} />
+                  {emotionAfter && (
                     <span style={{ color: '#a8947830', fontSize: '9px' }}>→</span>
                   )}
                 </>
               )}
-              {item.emotion_after && (
-                <EmotionDot emotion={item.emotion_after} />
+              {emotionAfter && (
+                <EmotionDot emotion={emotionAfter} />
               )}
 
               {/* Time */}
@@ -100,7 +103,7 @@ export default function JournalEntry({ item }: JournalEntryProps) {
 
       {/* Expanded content */}
       <AnimatePresence>
-        {expanded && (hasDescription || item.context || item.tags.length > 0) && (
+        {expanded && (hasNotes || item.tags.length > 0 || ritualSlot) && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
@@ -112,8 +115,8 @@ export default function JournalEntry({ item }: JournalEntryProps) {
               className="px-4 pb-4 pt-0"
               style={{ borderTop: '1px solid #a8947808' }}
             >
-              {/* Description */}
-              {hasDescription && (
+              {/* Notes */}
+              {hasNotes && (
                 <p
                   className="mt-3"
                   style={{
@@ -125,22 +128,7 @@ export default function JournalEntry({ item }: JournalEntryProps) {
                     whiteSpace: 'pre-wrap',
                   }}
                 >
-                  {item.description}
-                </p>
-              )}
-
-              {/* Context */}
-              {item.context && (
-                <p
-                  className="mt-2"
-                  style={{
-                    fontFamily: '"JetBrains Mono", monospace',
-                    fontSize: '10px',
-                    color: '#a8947840',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  {item.context}
+                  {item.notes}
                 </p>
               )}
 
@@ -165,23 +153,23 @@ export default function JournalEntry({ item }: JournalEntryProps) {
                 </div>
               )}
 
-              {/* Ritual period badge */}
-              {item.ritual_period && (
+              {/* Ritual slot badge */}
+              {ritualSlot && (
                 <div
                   className="mt-2 inline-block"
                   style={{
                     fontFamily: '"JetBrains Mono", monospace',
                     fontSize: '10px',
                     color:
-                      item.ritual_period === 'aurora'
+                      ritualSlot === 'aurora'
                         ? '#f0c674'
-                        : item.ritual_period === 'zenite'
+                        : ritualSlot === 'zenite'
                         ? '#e8e0d4'
                         : '#8a6e5a',
                     backgroundColor:
-                      item.ritual_period === 'aurora'
+                      ritualSlot === 'aurora'
                         ? '#f0c67415'
-                        : item.ritual_period === 'zenite'
+                        : ritualSlot === 'zenite'
                         ? '#e8e0d415'
                         : '#8a6e5a15',
                     padding: '2px 8px',
@@ -189,7 +177,7 @@ export default function JournalEntry({ item }: JournalEntryProps) {
                     letterSpacing: '0.06em',
                   }}
                 >
-                  {item.ritual_period}
+                  {ritualSlot}
                 </div>
               )}
 

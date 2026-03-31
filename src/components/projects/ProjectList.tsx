@@ -40,8 +40,8 @@ export default function ProjectList({ projects, onSelect }: ProjectListProps) {
   }
 
   // Separate active vs completed
-  const active = projects.filter((p) => !p.project.completed);
-  const completed = projects.filter((p) => p.project.completed);
+  const active = projects.filter((p) => p.project.status !== 'completed');
+  const completed = projects.filter((p) => p.project.status === 'completed');
 
   return (
     <div className="flex flex-col gap-4">

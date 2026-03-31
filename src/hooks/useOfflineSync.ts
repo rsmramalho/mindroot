@@ -26,10 +26,10 @@ async function processEntry(entry: QueueEntry): Promise<void> {
       }
       break;
     case 'complete':
-      if (entry.itemId) await itemService.complete(entry.itemId);
+      if (entry.itemId) await itemService.update(entry.itemId, { status: 'completed' });
       break;
     case 'uncomplete':
-      if (entry.itemId) await itemService.uncomplete(entry.itemId);
+      if (entry.itemId) await itemService.update(entry.itemId, { status: 'active' });
       break;
     case 'delete':
       if (entry.itemId) await itemService.delete(entry.itemId);

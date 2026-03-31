@@ -31,19 +31,19 @@ export function useItems() {
       result = result.filter((i) => i.module === filters.module);
     }
     if (filters.priority) {
-      result = result.filter((i) => i.priority === filters.priority);
+      result = result.filter((i) => i.body.operations?.priority === filters.priority);
     }
     if (filters.type) {
       result = result.filter((i) => i.type === filters.type);
     }
     if (!filters.showCompleted) {
-      result = result.filter((i) => !i.completed);
+      result = result.filter((i) => i.status !== 'completed');
     }
     if (filters.search) {
       const q = filters.search.toLowerCase();
       result = result.filter((i) =>
         i.title.toLowerCase().includes(q) ||
-        i.description?.toLowerCase().includes(q) ||
+        i.notes?.toLowerCase().includes(q) ||
         i.tags?.some((t) => t.toLowerCase().includes(q))
       );
     }
@@ -53,7 +53,7 @@ export function useItems() {
 
   // Today's items
   const todayItems = useMemo(
-    () => items.filter((i) => !i.completed && i.due_date && isToday(parseISO(i.due_date))),
+    () => items.filter((i) => i.status !== 'completed' && i.body.operations?.due_date && isToday(parseISO(i.body.operations.due_date))),
     [items]
   );
 
@@ -64,15 +64,15 @@ export function useItems() {
     [filtered, todayIds]
   );
 
-  // Inbox (no module, no parent)
+  // Inbox (no module, no project)
   const inboxItems = useMemo(
-    () => items.filter((i) => !i.completed && !i.module && !i.parent_id && i.type !== 'reflection'),
+    () => items.filter((i) => i.status !== 'completed' && !i.module && !i.project_id && i.type !== 'reflection'),
     [items]
   );
 
   // Chores
   const choreItems = useMemo(
-    () => items.filter((i) => i.is_chore && !i.completed),
+    () => items.filter((i) => i.tags.includes('chore') && i.status !== 'completed'),
     [items]
   );
 

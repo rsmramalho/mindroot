@@ -42,12 +42,19 @@ const JournalPrompt = forwardRef<JournalPromptHandle>(function JournalPrompt(_pr
       await createItem.mutateAsync({
         user_id: user.id,
         title,
-        type: 'journal',
-        module: 'soul',
-        emotion_after: emotion,
+        type: 'log',
+        module: 'mind',
+        body: {
+          soul: {
+            emotion_after: emotion,
+            emotion_before: null,
+            energy_level: null,
+            needs_checkin: false,
+            ritual_slot: null,
+          },
+        },
         tags: ['manual'],
-        description: text.trim().length > 120 ? text.trim() : null,
-        context: 'Entrada manual — journal',
+        notes: text.trim().length > 120 ? text.trim() : null,
       });
 
       // Reset

@@ -18,26 +18,34 @@ function makeItem(overrides: Partial<AtomItem> = {}): AtomItem {
     title: 'Test item',
     type: 'task',
     module: null,
-    priority: null,
     tags: [],
-    parent_id: null,
-    completed: false,
-    completed_at: null,
-    archived: false,
-    due_date: null,
-    due_time: null,
-    recurrence: null,
-    ritual_period: null,
-    emotion_before: null,
-    emotion_after: null,
-    needs_checkin: false,
-    is_chore: false,
-    energy_cost: null,
-    description: null,
-    context: null,
+    status: 'active',
+    state: 'inbox',
+    genesis_stage: 1,
+    project_id: null,
+    naming_convention: null,
+    notes: null,
+    body: {},
+    source: 'mindroot',
     created_at: '2025-01-01T10:00:00Z',
     updated_at: '2025-01-01T10:00:00Z',
+    created_by: null,
     ...overrides,
+  };
+}
+
+// Helper: create item with soul extension
+function withSoul(soul: { needs_checkin?: boolean; emotion_before?: string | null; emotion_after?: string | null }) {
+  return {
+    body: {
+      soul: {
+        needs_checkin: soul.needs_checkin ?? false,
+        emotion_before: soul.emotion_before ?? null,
+        emotion_after: soul.emotion_after ?? null,
+        energy_level: null,
+        ritual_slot: null,
+      },
+    },
   };
 }
 
@@ -45,12 +53,12 @@ function makeItem(overrides: Partial<AtomItem> = {}): AtomItem {
 
 describe('shouldTriggerCheckIn', () => {
   it('returns null when item is NOT completed', () => {
-    const item = makeItem({ needs_checkin: true, completed: false });
+    const item = makeItem({ status: 'active', ...withSoul({ needs_checkin: true }) });
     expect(shouldTriggerCheckIn(item)).toBeNull();
   });
 
   it('triggers when needs_checkin is true and completed', () => {
-    const item = makeItem({ needs_checkin: true, completed: true });
+    const item = makeItem({ status: 'completed', ...withSoul({ needs_checkin: true }) });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger).not.toBeNull();
     expect(trigger!.reason).toBe('task_complete');
@@ -58,57 +66,57 @@ describe('shouldTriggerCheckIn', () => {
   });
 
   it('triggers with reason chore_complete for chore items', () => {
-    const item = makeItem({ is_chore: true, completed: true });
+    const item = makeItem({ status: 'completed', tags: ['chore'] });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger).not.toBeNull();
     expect(trigger!.reason).toBe('chore_complete');
   });
 
   it('triggers with reason chore_complete when needs_checkin AND is_chore', () => {
-    const item = makeItem({ needs_checkin: true, is_chore: true, completed: true });
+    const item = makeItem({ status: 'completed', tags: ['chore'], ...withSoul({ needs_checkin: true }) });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger!.reason).toBe('chore_complete');
   });
 
   it('triggers when item has emotion_before and is completed', () => {
-    const item = makeItem({ emotion_before: 'ansioso', completed: true });
+    const item = makeItem({ status: 'completed', ...withSoul({ emotion_before: 'ansioso' }) });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger).not.toBeNull();
     expect(trigger!.emotion_before).toBe('ansioso');
   });
 
   it('triggers for ritual type items when completed', () => {
-    const item = makeItem({ type: 'ritual', completed: true });
+    const item = makeItem({ type: 'ritual', status: 'completed' });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger).not.toBeNull();
     expect(trigger!.prompt).toBe('Como foi esse momento de ritual?');
   });
 
   it('returns null for plain completed task without any trigger flags', () => {
-    const item = makeItem({ completed: true });
+    const item = makeItem({ status: 'completed' });
     expect(shouldTriggerCheckIn(item)).toBeNull();
   });
 
   it('generates chore-specific prompt', () => {
-    const item = makeItem({ is_chore: true, completed: true });
+    const item = makeItem({ status: 'completed', tags: ['chore'] });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger!.prompt).toBe('Trabalho invisível reconhecido. Como você se sente depois?');
   });
 
   it('generates challenging emotion prompt', () => {
-    const item = makeItem({ emotion_before: 'frustrado', completed: true, needs_checkin: true });
+    const item = makeItem({ status: 'completed', ...withSoul({ emotion_before: 'frustrado', needs_checkin: true }) });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger!.prompt).toContain('frustrado');
   });
 
   it('generates positive emotion prompt', () => {
-    const item = makeItem({ emotion_before: 'animado', completed: true, needs_checkin: true });
+    const item = makeItem({ status: 'completed', ...withSoul({ emotion_before: 'animado', needs_checkin: true }) });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger!.prompt).toContain('animado');
   });
 
   it('generates neutral emotion prompt', () => {
-    const item = makeItem({ emotion_before: 'neutro', completed: true, needs_checkin: true });
+    const item = makeItem({ status: 'completed', ...withSoul({ emotion_before: 'neutro', needs_checkin: true }) });
     const trigger = shouldTriggerCheckIn(item);
     expect(trigger!.prompt).toContain('neutro');
   });

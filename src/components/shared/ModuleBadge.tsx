@@ -3,7 +3,7 @@
 // Standalone — usado em ItemRow, Dashboard, Inbox
 
 import { useThemeStore } from '@/store/theme-store';
-import type { ItemModule } from '@/types/item';
+import type { AtomModule } from '@/types/item';
 
 const MODULE_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
   purpose: { label: 'Propósito', color: '#c4a882', icon: '◇' },
@@ -11,8 +11,9 @@ const MODULE_CONFIG: Record<string, { label: string; color: string; icon: string
   family:  { label: 'Família',  color: '#d4856a', icon: '♡' },
   body:    { label: 'Corpo',    color: '#b8c4a8', icon: '○' },
   mind:    { label: 'Mente',    color: '#a89478', icon: '◎' },
-  soul:    { label: 'Alma',     color: '#8a6e5a', icon: '✦' },
-  home:    { label: 'Casa',     color: '#a89478', icon: '⌂' },
+  bridge:  { label: 'Ponte',    color: '#8a8a8a', icon: '⌂' },
+  finance: { label: 'Finanças', color: '#7a9e8a', icon: '▦' },
+  social:  { label: 'Social',   color: '#9e7a8a', icon: '✦' },
 };
 
 interface ModuleBadgeProps {
@@ -31,7 +32,7 @@ export default function ModuleBadge({ module, size = 'sm', showLabel = true }: M
 
   // Use custom color if available for known modules
   const color = (module in customColors)
-    ? customColors[module as ItemModule]
+    ? customColors[module as AtomModule]
     : config.color;
 
   const isSmall = size === 'sm';

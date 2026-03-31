@@ -38,6 +38,8 @@ const SHIFT_CONFIG: Record<EmotionalShift, { icon: string; message: string; colo
 export default function PostCheckIn({ item, emotionAfter, shift, onDismiss }: PostCheckInProps) {
   const shiftInfo = SHIFT_CONFIG[shift];
   const afterStyle = EMOTION_STYLES[emotionAfter];
+  const emotionBefore = item.body.soul?.emotion_before;
+  const isChore = item.tags.includes('chore');
 
   return (
     <div className="flex flex-col gap-4 p-6">
@@ -68,17 +70,17 @@ export default function PostCheckIn({ item, emotionAfter, shift, onDismiss }: Po
 
           {/* Emotion flow: before → after */}
           <div className="flex items-center gap-2 mt-1">
-            {item.emotion_before && (
+            {emotionBefore && (
               <>
                 <span
                   style={{
                     fontFamily: 'Inter, sans-serif',
                     fontSize: '12px',
-                    color: EMOTION_STYLES[item.emotion_before]?.color || '#a89478',
+                    color: EMOTION_STYLES[emotionBefore as keyof typeof EMOTION_STYLES]?.color || '#a89478',
                     fontWeight: 500,
                   }}
                 >
-                  {item.emotion_before}
+                  {emotionBefore}
                 </span>
                 <span style={{ color: '#a8947840', fontSize: '10px' }}>→</span>
               </>
@@ -98,7 +100,7 @@ export default function PostCheckIn({ item, emotionAfter, shift, onDismiss }: Po
       </div>
 
       {/* Chore recognition */}
-      {item.is_chore && (
+      {isChore && (
         <div
           style={{
             fontFamily: '"Cormorant Garamond", serif',

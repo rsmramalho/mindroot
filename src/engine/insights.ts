@@ -1,7 +1,7 @@
 // engine/insights.ts — Emotional insights engine
 // Pure logic: correlations, patterns, natural language suggestions in pt-BR
 
-import type { AtomItem, Emotion, ItemModule } from '@/types/item';
+import type { AtomItem, Emotion, AtomModule, SoulExtension, OperationsExtension, EnergyLevel } from '@/types/item';
 import { POSITIVE_EMOTIONS, CHALLENGING_EMOTIONS, MODULES } from '@/types/item';
 import { parseISO, getHours, getDay, format } from 'date-fns';
 
@@ -18,8 +18,8 @@ export interface PeriodProductivity {
   period: 'manha' | 'tarde' | 'noite';
   label: string;
   totalCompleted: number;
-  modules: { module: ItemModule; count: number }[];
-  topModule: ItemModule | null;
+  modules: { module: AtomModule; count: number }[];
+  topModule: AtomModule | null;
 }
 
 export interface WeekdayPattern {
@@ -54,17 +54,53 @@ const EMOTION_LABELS: Record<Emotion, string> = {
   neutro: 'neutro',
 };
 
+// ─── Helpers ────────────────────────────────────────────────
+
+function getEmotionBefore(item: AtomItem): Emotion | null {
+  const val = (item.body?.soul as SoulExtension | undefined)?.emotion_before;
+  return (val as Emotion) ?? null;
+}
+
+function getDeadline(item: AtomItem): string | null {
+  return (item.body?.operations as OperationsExtension | undefined)?.deadline ?? null;
+}
+
+function getEnergyLevel(item: AtomItem): EnergyLevel | null {
+  return (item.body?.soul as SoulExtension | undefined)?.energy_level ?? null;
+}
+
+function isCompleted(item: AtomItem): boolean {
+  return item.status === 'completed';
+}
+
+function isArchived(item: AtomItem): boolean {
+  return item.status === 'archived';
+}
+
 // ─── Emotion → Productivity correlation ─────────────────────
+
+function getPeriod(hour: number): 'manha' | 'tarde' | 'noite' {
+  if (hour >= 5 && hour < 12) return 'manha';
+  if (hour >= 12 && hour < 18) return 'tarde';
+  return 'noite';
+}
+
+const PERIOD_LABELS: Record<string, string> = {
+  manha: 'Manha',
+  tarde: 'Tarde',
+  noite: 'Noite',
+};
 
 export function computeEmotionProductivity(items: AtomItem[]): EmotionProductivity[] {
   const byEmotion = new Map<Emotion, { total: number; completed: number }>();
 
   for (const item of items) {
-    if (!item.emotion_before || item.archived) continue;
-    const entry = byEmotion.get(item.emotion_before) || { total: 0, completed: 0 };
+    const emotionBefore = getEmotionBefore(item);
+    if (!emotionBefore || isArchived(item)) continue;
+    const entry = byEmotion.get(emotionBefore) || { total: 0, completed: 0 };
     entry.total++;
-    if (item.completed) entry.completed++;
-    byEmotion.set(item.emotion_before, entry);
+    if (isCompleted(item)) entry.completed++;
+    byEmotion.set(emotionBefore, entry);
   }
 
   return [...byEmotion.entries()]
@@ -80,29 +116,17 @@ export function computeEmotionProductivity(items: AtomItem[]): EmotionProductivi
 
 // ─── Best time of day per module ────────────────────────────
 
-function getPeriod(hour: number): 'manha' | 'tarde' | 'noite' {
-  if (hour >= 5 && hour < 12) return 'manha';
-  if (hour >= 12 && hour < 18) return 'tarde';
-  return 'noite';
-}
-
-const PERIOD_LABELS: Record<string, string> = {
-  manha: 'Manha',
-  tarde: 'Tarde',
-  noite: 'Noite',
-};
-
 export function computePeriodProductivity(items: AtomItem[]): PeriodProductivity[] {
-  const periods: Record<string, { completed: number; modules: Map<ItemModule, number> }> = {
+  const periods: Record<string, { completed: number; modules: Map<AtomModule, number> }> = {
     manha: { completed: 0, modules: new Map() },
     tarde: { completed: 0, modules: new Map() },
     noite: { completed: 0, modules: new Map() },
   };
 
   for (const item of items) {
-    const completedTs = item.completed_at;
-    if (!item.completed || !completedTs || item.archived) continue;
-    const hour = getHours(parseISO(completedTs));
+    const deadline = getDeadline(item);
+    if (!isCompleted(item) || !deadline || isArchived(item)) continue;
+    const hour = getHours(parseISO(deadline));
     const period = getPeriod(hour);
     periods[period].completed++;
     if (item.module) {
@@ -136,17 +160,18 @@ export function computeWeekdayPatterns(items: AtomItem[]): WeekdayPattern[] {
   }
 
   for (const item of items) {
-    const completedTs = item.completed_at;
-    if (!item.completed || !completedTs || item.archived) continue;
-    const date = parseISO(completedTs);
+    const deadline = getDeadline(item);
+    if (!isCompleted(item) || !deadline || isArchived(item)) continue;
+    const date = parseISO(deadline);
     const day = getDay(date);
     const weekKey = format(date, 'yyyy-ww');
     byDay[day].completed++;
     byDay[day].weeks.add(weekKey);
 
-    if (item.emotion_before) {
+    const emotionBefore = getEmotionBefore(item);
+    if (emotionBefore) {
       byDay[day].emotionCount++;
-      if (POSITIVE_EMOTIONS.includes(item.emotion_before)) {
+      if (POSITIVE_EMOTIONS.includes(emotionBefore)) {
         byDay[day].positiveCount++;
       }
     }
@@ -167,7 +192,7 @@ export function computeWeekdayPatterns(items: AtomItem[]): WeekdayPattern[] {
 
 export function generateInsights(items: AtomItem[]): Insight[] {
   const insights: Insight[] = [];
-  const nonArchived = items.filter((i) => !i.archived);
+  const nonArchived = items.filter((i) => !isArchived(i));
 
   if (nonArchived.length < 3) return insights;
 
@@ -299,16 +324,16 @@ export function generateInsights(items: AtomItem[]): Insight[] {
     });
   }
 
-  // If high energy cost items have low completion
-  const highEnergy = nonArchived.filter((i) => i.energy_cost !== null && i.energy_cost >= 4);
+  // If high energy level items have low completion
+  const highEnergy = nonArchived.filter((i) => getEnergyLevel(i) === 'high');
   if (highEnergy.length >= 3) {
-    const highEnergyCompleted = highEnergy.filter((i) => i.completed).length;
+    const highEnergyCompleted = highEnergy.filter((i) => isCompleted(i)).length;
     const rate = Math.round((highEnergyCompleted / highEnergy.length) * 100);
     if (rate < 50) {
       insights.push({
         id: 'suggestion-energy',
         type: 'suggestion',
-        text: `Tarefas de alta energia (4-5) tem ${rate}% de conclusao — tente divide-las em partes menores`,
+        text: `Tarefas de alta energia tem ${rate}% de conclusao — tente divide-las em partes menores`,
         priority: 2,
       });
     }

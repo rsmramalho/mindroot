@@ -1,13 +1,13 @@
 // components/shared/PriorityPicker.tsx
-// 4 níveis de prioridade para seleção
+// 3 níveis de prioridade para seleção
 // Usado no EditSheet
 
 import { PRIORITY_CONFIG } from './PriorityDot';
-import type { ItemPriority } from '@/types/item';
+import type { Priority } from '@/types/item';
 
 interface PriorityPickerProps {
-  value: ItemPriority | null;
-  onChange: (priority: ItemPriority | null) => void;
+  value: Priority | null;
+  onChange: (priority: Priority | null) => void;
 }
 
 export default function PriorityPicker({ value, onChange }: PriorityPickerProps) {
@@ -32,7 +32,7 @@ export default function PriorityPicker({ value, onChange }: PriorityPickerProps)
             <button
               key={key}
               type="button"
-              onClick={() => onChange(selected ? null : (key as ItemPriority))}
+              onClick={() => onChange(selected ? null : (key as Priority))}
               aria-label={`Prioridade: ${label}`}
               className="flex items-center gap-1.5 rounded-lg transition-all duration-150 flex-1"
               style={{

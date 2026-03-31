@@ -1,12 +1,12 @@
 // types/ui.ts — UI state types
-import type { ItemModule, ItemPriority, ItemType, RitualPeriod } from './item';
+import type { AtomModule, Priority, AtomType, RitualSlot } from './item';
 
 export type AppPage = 'home' | 'inbox' | 'projects' | 'project-detail' | 'ritual' | 'journal' | 'calendar' | 'analytics';
 
 export interface AppFilters {
-  module: ItemModule | null;
-  priority: ItemPriority | null;
-  type: ItemType | null;
+  module: AtomModule | null;
+  priority: Priority | null;
+  type: AtomType | null;
   search: string;
   showCompleted: boolean;
   dateRange: { start: string; end: string } | null;
@@ -22,7 +22,7 @@ export const DEFAULT_FILTERS: AppFilters = {
 };
 
 export interface RitualPeriodConfig {
-  key: RitualPeriod;
+  key: RitualSlot;
   label: string;
   greeting: string;
   hours: { start: number; end: number };

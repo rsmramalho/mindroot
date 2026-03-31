@@ -43,8 +43,9 @@ export default function MonthGrid({
   const itemsByDate = useMemo(() => {
     const map = new Map<string, AtomItem[]>();
     for (const item of items) {
-      if (!item.due_date) continue;
-      const key = item.due_date.slice(0, 10); // yyyy-MM-dd
+      const dueDate = item.body.operations?.due_date;
+      if (!dueDate) continue;
+      const key = dueDate.slice(0, 10); // yyyy-MM-dd
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(item);
     }
@@ -84,7 +85,10 @@ export default function MonthGrid({
           const selected = selectedDate ? isSameDay(day, selectedDate) : false;
           const hasItems = dayItems.length > 0;
           const hasOverdue = dayItems.some(
-            (i) => !i.completed && new Date(i.due_date!) < new Date() && !isToday(new Date(i.due_date!))
+            (i) => {
+              const dd = i.body.operations?.due_date;
+              return i.status !== 'completed' && dd && new Date(dd) < new Date() && !isToday(new Date(dd));
+            }
           );
 
           return (
@@ -137,7 +141,7 @@ export default function MonthGrid({
                         height: 3,
                         backgroundColor: hasOverdue
                           ? '#e85d5d'
-                          : item.completed
+                          : item.status === 'completed'
                             ? '#8a9e7a'
                             : '#c4a882',
                       }}

@@ -1,7 +1,7 @@
 // engine/theme.ts — Theme & personalization logic
 // Pure functions: color tokens, CSS variable generation, section ordering
 
-import type { ItemModule } from '@/types/item';
+import type { AtomModule } from '@/types/item';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -21,19 +21,21 @@ export interface ThemeColors {
 
 export interface ThemeConfig {
   mode: ThemeMode;
-  moduleColors: Record<ItemModule, string>;
+  moduleColors: Record<AtomModule, string>;
   dashboardOrder: DashboardSection[];
 }
 
 // ─── Defaults ───────────────────────────────────────────────
 
-export const DEFAULT_MODULE_COLORS: Record<ItemModule, string> = {
+export const DEFAULT_MODULE_COLORS: Record<AtomModule, string> = {
   purpose: '#c4a882',
   work: '#8a9e7a',
   family: '#d4856a',
   body: '#b8c4a8',
   mind: '#a89478',
-  soul: '#8a6e5a',
+  bridge: '#8a8a8a',
+  finance: '#7a9e8a',
+  social: '#9e7a8a',
 };
 
 export const DEFAULT_DASHBOARD_ORDER: DashboardSection[] = [

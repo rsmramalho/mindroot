@@ -16,7 +16,9 @@ interface RitualHabitProps {
 export default function RitualHabit({ item, onToggle, periodColor }: RitualHabitProps) {
   const [pressing, setPressing] = useState(false);
   const moduleInfo = MODULES.find((m) => m.key === item.module);
-  const recurrenceBadge = getRecurrenceBadge(item.recurrence);
+  const recurrenceBadge = getRecurrenceBadge(item.body.recurrence?.rule ?? null);
+  const isCompleted = item.status === 'completed';
+  const needsCheckin = item.body.soul?.needs_checkin;
 
   return (
     <motion.button
@@ -27,15 +29,15 @@ export default function RitualHabit({ item, onToggle, periodColor }: RitualHabit
       onPointerLeave={() => setPressing(false)}
       className="w-full text-left transition-all duration-200"
       style={{
-        backgroundColor: item.completed ? '#1a1d2408' : '#1a1d24',
+        backgroundColor: isCompleted ? '#1a1d2408' : '#1a1d24',
         borderRadius: '12px',
-        border: `1px solid ${item.completed ? '#a8947810' : '#a8947815'}`,
+        border: `1px solid ${isCompleted ? '#a8947810' : '#a8947815'}`,
         padding: '14px 16px',
-        opacity: item.completed ? 0.55 : 1,
+        opacity: isCompleted ? 0.55 : 1,
         transform: pressing ? 'scale(0.98)' : 'scale(1)',
       }}
       initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: item.completed ? 0.55 : 1, y: 0 }}
+      animate={{ opacity: isCompleted ? 0.55 : 1, y: 0 }}
       transition={{ duration: 0.2 }}
     >
       <div className="flex items-center gap-3">
@@ -46,12 +48,12 @@ export default function RitualHabit({ item, onToggle, periodColor }: RitualHabit
             width: 22,
             height: 22,
             borderRadius: '50%',
-            border: `2px solid ${item.completed ? periodColor : '#a8947830'}`,
-            backgroundColor: item.completed ? periodColor + '20' : 'transparent',
+            border: `2px solid ${isCompleted ? periodColor : '#a8947830'}`,
+            backgroundColor: isCompleted ? periodColor + '20' : 'transparent',
           }}
         >
           <AnimatePresence>
-            {item.completed && (
+            {isCompleted && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -76,9 +78,9 @@ export default function RitualHabit({ item, onToggle, periodColor }: RitualHabit
               fontFamily: '"Cormorant Garamond", serif',
               fontSize: '17px',
               fontWeight: 400,
-              color: item.completed ? '#a8947860' : '#e8e0d4',
+              color: isCompleted ? '#a8947860' : '#e8e0d4',
               letterSpacing: '-0.01em',
-              textDecoration: item.completed ? 'line-through' : 'none',
+              textDecoration: isCompleted ? 'line-through' : 'none',
               textDecorationColor: '#a8947830',
               display: 'block',
             }}
@@ -93,7 +95,7 @@ export default function RitualHabit({ item, onToggle, periodColor }: RitualHabit
                 fontSize: '10px',
                 fontWeight: 400,
                 color: moduleInfo.color,
-                opacity: item.completed ? 0.5 : 0.7,
+                opacity: isCompleted ? 0.5 : 0.7,
                 letterSpacing: '0.04em',
                 marginTop: '2px',
                 display: 'block',
@@ -111,13 +113,13 @@ export default function RitualHabit({ item, onToggle, periodColor }: RitualHabit
               fontSize: '9px',
               fontFamily: '"JetBrains Mono", monospace',
               fontWeight: 500,
-              color: item.completed ? `${periodColor}60` : periodColor,
+              color: isCompleted ? `${periodColor}60` : periodColor,
               backgroundColor: `${periodColor}10`,
               border: `1px solid ${periodColor}20`,
               borderRadius: '4px',
               padding: '2px 6px',
               letterSpacing: '0.04em',
-              opacity: item.completed ? 0.5 : 0.8,
+              opacity: isCompleted ? 0.5 : 0.8,
               flexShrink: 0,
             }}
           >
@@ -126,7 +128,7 @@ export default function RitualHabit({ item, onToggle, periodColor }: RitualHabit
         )}
 
         {/* Check-in indicator */}
-        {item.needs_checkin && !item.completed && (
+        {needsCheckin && !isCompleted && (
           <div
             style={{
               width: 6,

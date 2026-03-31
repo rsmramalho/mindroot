@@ -14,13 +14,13 @@ export interface JournalGroup {
 export function useJournal() {
   const { items, isLoading } = useItems();
 
-  // All journal-type items (reflections + journal entries)
+  // All journal-type items (reflections + log entries)
   const journalItems = useMemo(
     () =>
       items
         .filter(
           (i) =>
-            (i.type === 'reflection' || i.type === 'journal') && !i.archived
+            (i.type === 'reflection' || i.type === 'log') && i.status !== 'archived'
         )
         .sort(
           (a, b) =>
@@ -62,7 +62,7 @@ export function useJournal() {
   const stats = useMemo(() => {
     const total = journalItems.length;
     const withEmotion = journalItems.filter(
-      (i) => i.emotion_before || i.emotion_after
+      (i) => i.body.soul?.emotion_before || i.body.soul?.emotion_after
     ).length;
     const todayCount = journalItems.filter((i) =>
       isToday(parseISO(i.created_at))

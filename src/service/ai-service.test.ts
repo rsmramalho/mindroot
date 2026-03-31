@@ -9,7 +9,7 @@ describe('aiService.mergeWithLocal', () => {
     title: 'AI cleaned title',
     type: 'task',
     module: 'work',
-    priority: 'urgente',
+    priority: 'high',
     emotion_before: 'ansioso',
     is_chore: false,
     due_date: '2025-06-15',
@@ -23,14 +23,14 @@ describe('aiService.mergeWithLocal', () => {
       title: 'local title',
       type: 'note',
       module: 'family',
-      priority: 'futuro',
+      priority: 'low',
       emotion_before: 'calmo',
     });
     const merged = aiService.mergeWithLocal(baseAI, local);
     expect(merged.title).toBe('AI cleaned title');
     expect(merged.type).toBe('task');
     expect(merged.module).toBe('work');
-    expect(merged.priority).toBe('urgente');
+    expect(merged.priority).toBe('high');
     expect(merged.emotion_before).toBe('ansioso');
   });
 
@@ -100,13 +100,13 @@ describe('aiService.mergeWithLocal', () => {
     const local = mockParsedInput({
       title: 'local title',
       module: 'family',
-      priority: 'importante',
+      priority: 'medium',
       emotion_before: 'focado',
     });
     const merged = aiService.mergeWithLocal(ai, local);
     expect(merged.title).toBe('local title');
     expect(merged.module).toBe('family');
-    expect(merged.priority).toBe('importante');
+    expect(merged.priority).toBe('medium');
     expect(merged.emotion_before).toBe('focado');
   });
 });

@@ -32,7 +32,7 @@ export function useSoul() {
 
   // Chamado quando user completa um item
   const onItemComplete = useCallback((item: AtomItem) => {
-    const trigger = shouldTriggerCheckIn({ ...item, completed: true });
+    const trigger = shouldTriggerCheckIn({ ...item, status: 'completed' });
     if (trigger) {
       setCheckIn({
         active: true,
@@ -55,9 +55,9 @@ export function useSoul() {
     (emotion: Emotion) => {
       if (!checkIn.item || !checkIn.trigger) return;
 
-      const shift = detectShift(checkIn.item.emotion_before, emotion);
+      const shift = detectShift((checkIn.item.body.soul?.emotion_before as Emotion | undefined) ?? null, emotion);
 
-      // ★ Set result state FIRST — before mutations trigger re-renders
+      // Set result state FIRST — before mutations trigger re-renders
       const item = checkIn.item;
       setCheckIn((prev) => ({
         ...prev,
@@ -69,10 +69,21 @@ export function useSoul() {
       // Then fire mutations (these trigger query invalidation + re-renders)
       updateMutation.mutate({
         id: item.id,
-        updates: { emotion_after: emotion },
+        updates: {
+          body: {
+            ...item.body,
+            soul: {
+              energy_level: item.body.soul?.energy_level ?? null,
+              emotion_before: item.body.soul?.emotion_before ?? null,
+              emotion_after: emotion,
+              needs_checkin: item.body.soul?.needs_checkin ?? false,
+              ritual_slot: item.body.soul?.ritual_slot ?? null,
+            },
+          },
+        },
       });
 
-      // Criar reflection automática
+      // Criar reflection automatica
       const reflectionTitle = buildReflectionTitle(item, emotion, shift);
 
       createItem.mutate({
@@ -80,10 +91,17 @@ export function useSoul() {
         title: reflectionTitle,
         type: 'reflection',
         module: item.module,
-        emotion_before: item.emotion_before,
-        emotion_after: emotion,
+        body: {
+          soul: {
+            energy_level: null,
+            emotion_before: item.body.soul?.emotion_before ?? null,
+            emotion_after: emotion,
+            needs_checkin: false,
+            ritual_slot: null,
+          },
+        },
         tags: ['auto_checkin'],
-        context: `Check-in após: ${item.title}`,
+        notes: `Check-in apos: ${item.title}`,
       });
     },
     [checkIn.item, checkIn.trigger, updateMutation, createItem]
@@ -109,22 +127,23 @@ export function useSoul() {
   };
 }
 
-// ─── Helper ───────────────────────────────────────────────
+// --- Helper -----------------------------------------------------------
 
 function buildReflectionTitle(
   item: AtomItem,
   emotionAfter: Emotion,
   shift: EmotionalShift
 ): string {
-  if (item.is_chore) {
-    return `Trabalho invisível: ${item.title} → ${emotionAfter}`;
+  if (item.tags.includes('chore')) {
+    return `Trabalho invisivel: ${item.title} -> ${emotionAfter}`;
   }
 
+  const emotionBefore = item.body.soul?.emotion_before;
   switch (shift) {
     case 'positive':
-      return `↑ ${item.emotion_before} → ${emotionAfter} | ${item.title}`;
+      return `-> ${emotionBefore} -> ${emotionAfter} | ${item.title}`;
     case 'negative':
-      return `↓ ${item.emotion_before} → ${emotionAfter} | ${item.title}`;
+      return `<- ${emotionBefore} -> ${emotionAfter} | ${item.title}`;
     case 'stable':
       return `= ${emotionAfter} | ${item.title}`;
     default:

@@ -7,7 +7,7 @@ import { pushService } from '@/service/push-service';
 import { useNotificationStore } from '@/store/notification-store';
 import { useRitualStore } from '@/store/ritual-store';
 import { useAppStore } from '@/store/app-store';
-import type { RitualPeriod, AtomItem } from '@/types/item';
+import type { RitualSlot, AtomItem } from '@/types/item';
 
 const OVERDUE_CHECK_INTERVAL = 5 * 60_000; // 5 minutes
 
@@ -16,12 +16,12 @@ export function useNotifications() {
   const { refreshPeriod } = useRitualStore();
   const store = useNotificationStore();
 
-  const lastPeriod = useRef<RitualPeriod>(useRitualStore.getState().currentPeriod);
+  const lastPeriod = useRef<RitualSlot>(useRitualStore.getState().currentPeriod);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const overdueInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const itemsRef = useRef<AtomItem[]>([]);
 
-  // ─── Initialize permission state ────────────────────────
+  // --- Initialize permission state ------
 
   useEffect(() => {
     const permState = notificationService.getPermissionState();
@@ -39,7 +39,7 @@ export function useNotifications() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Enable notifications ───────────────────────────────
+  // --- Enable notifications ---------
 
   const enable = useCallback(async () => {
     const granted = await notificationService.requestPermission();
@@ -59,7 +59,7 @@ export function useNotifications() {
     return granted;
   }, [store, user?.id]);
 
-  // ─── Disable notifications ──────────────────────────────
+  // --- Disable notifications --------
 
   const disable = useCallback(async () => {
     store.setEnabled(false);
@@ -81,7 +81,7 @@ export function useNotifications() {
     }
   }, [store, user?.id]);
 
-  // ─── Period transition scheduling ───────────────────────
+  // --- Period transition scheduling -----
   // Uses setTimeout to fire exactly at next transition, then reschedules
 
   useEffect(() => {
@@ -115,7 +115,7 @@ export function useNotifications() {
     };
   }, [store.enabled, store.periodTransitions, refreshPeriod]);
 
-  // ─── Overdue item check ─────────────────────────────────
+  // --- Overdue item check -----------
   // Checks on interval, sends max 1x per day
 
   useEffect(() => {
@@ -143,14 +143,14 @@ export function useNotifications() {
     };
   }, [store, store.enabled, store.overdueReminders]);
 
-  // ─── Update items ref for overdue counting ──────────────
+  // --- Update items ref for overdue counting ------
 
   const updateItems = useCallback((items: AtomItem[]) => {
     itemsRef.current = items;
 
     // Also update pending ritual count for period notifications
     const pendingRituals = items.filter(
-      (i) => i.type === 'ritual' && !i.completed && !i.archived
+      (i) => i.type === 'ritual' && i.status !== 'completed' && i.status !== 'archived'
     ).length;
     notificationService.setPendingRitualCount(pendingRituals);
   }, []);
@@ -172,4 +172,3 @@ export function useNotifications() {
     dismissPrompt: store.dismissPrompt,
   };
 }
-

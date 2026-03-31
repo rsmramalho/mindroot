@@ -1,13 +1,13 @@
 // components/shared/ModulePicker.tsx
-// Grid de 6 módulos para seleção
+// Grid de módulos para seleção
 // Usado no EditSheet e InboxActions
 
 import { MODULE_CONFIG } from './ModuleBadge';
-import type { ItemModule } from '@/types/item';
+import type { AtomModule } from '@/types/item';
 
 interface ModulePickerProps {
-  value: ItemModule | null;
-  onChange: (module: ItemModule | null) => void;
+  value: AtomModule | null;
+  onChange: (module: AtomModule | null) => void;
 }
 
 export default function ModulePicker({ value, onChange }: ModulePickerProps) {
@@ -36,7 +36,7 @@ export default function ModulePicker({ value, onChange }: ModulePickerProps) {
             <button
               key={key}
               type="button"
-              onClick={() => onChange(selected ? null : (key as ItemModule))}
+              onClick={() => onChange(selected ? null : (key as AtomModule))}
               aria-label={label}
               className="flex items-center gap-1.5 rounded-lg transition-all duration-150"
               style={{

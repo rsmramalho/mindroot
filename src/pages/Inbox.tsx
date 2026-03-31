@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useItems } from '@/hooks/useItems';
 import { useItemMutations } from '@/hooks/useItemMutations';
-import type { AtomItem, ItemModule, ItemPriority, UpdateItemPayload } from '@/types/item';
+import type { AtomItem, AtomModule, Priority, UpdateItemPayload } from '@/types/item';
 import { sortItems } from '@/engine/dashboard-filters';
 import ItemRow from '@/components/shared/ItemRow';
 import InboxActions from '@/components/inbox/InboxActions';
@@ -32,23 +32,30 @@ export function InboxPage() {
   const deletingItem = deletingId ? inboxItems.find((i) => i.id === deletingId) : null;
 
   const handleSetModule = (id: string, module: string) => {
-    updateMutation.mutate({ id, updates: { module: module as ItemModule } });
+    updateMutation.mutate({ id, updates: { module: module as AtomModule } });
     setSelectedId(null);
   };
 
   const handleSetPriority = (id: string, priority: string) => {
-    updateMutation.mutate({ id, updates: { priority: priority as ItemPriority } });
+    updateMutation.mutate({
+      id,
+      updates: {
+        body: { operations: { priority: priority as Priority } } as any,
+      },
+    });
   };
 
   const handleArchive = (id: string) => {
-    updateMutation.mutate({ id, updates: { archived: true } });
+    updateMutation.mutate({ id, updates: { status: 'archived' as const } });
     setSelectedId(null);
   };
 
   const handlePromote = (id: string) => {
     updateMutation.mutate({
       id,
-      updates: { due_date: formatISO(startOfDay(new Date())) },
+      updates: {
+        body: { operations: { due_date: formatISO(startOfDay(new Date())).slice(0, 10) } } as any,
+      },
     });
     setSelectedId(null);
   };
@@ -135,7 +142,7 @@ export function InboxPage() {
               <InboxActions
                 itemId={item.id}
                 currentModule={item.module}
-                currentPriority={item.priority}
+                currentPriority={item.body.operations?.priority}
                 onSetModule={handleSetModule}
                 onSetPriority={handleSetPriority}
                 onArchive={handleArchive}

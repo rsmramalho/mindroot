@@ -23,7 +23,7 @@ import {
   parseISO,
   getDay,
 } from 'date-fns';
-import type { AtomItem } from '@/types/item';
+import type { AtomItem, RecurrenceExtension } from '@/types/item';
 
 // ─── Types ────────────────────────────────────────────────
 
@@ -37,27 +37,39 @@ export const RECURRENCE_OPTIONS: { key: RecurrenceType | 'none'; label: string }
   { key: 'monthly', label: 'Mensal' },
 ];
 
+// ─── Helpers ────────────────────────────────────────────────
+
+function getRecurrenceRule(item: AtomItem): string | null {
+  return (item.body?.recurrence as RecurrenceExtension | undefined)?.rule ?? null;
+}
+
+function getLastCompleted(item: AtomItem): string | null {
+  return (item.body?.recurrence as RecurrenceExtension | undefined)?.last_completed ?? null;
+}
+
 // ─── Core: Should Reset? ─────────────────────────────────
 
 /**
  * Determines if a recurring item should appear as "not done" for the current period.
  * Returns true if the item was completed in a PREVIOUS period and should reset.
  *
- * If the item is not recurring, not completed, or has no completed_at, returns false.
+ * If the item is not recurring, not completed, or has no last_completed, returns false.
  */
 export function shouldReset(item: AtomItem, now: Date = new Date()): boolean {
   // Not recurring → never reset
-  if (!item.recurrence) return false;
+  const recurrenceRule = getRecurrenceRule(item);
+  if (!recurrenceRule) return false;
 
   // Not completed → nothing to reset
-  if (!item.completed) return false;
+  if (item.status !== 'completed') return false;
 
   // No completion timestamp → nothing to compare
-  if (item.completed_at === null) return false;
+  const lastCompleted = getLastCompleted(item);
+  if (lastCompleted === null) return false;
 
-  const completedAt = parseISO(item.completed_at);
+  const completedAt = parseISO(lastCompleted);
 
-  return !isCompletedInCurrentPeriod(item.recurrence as RecurrenceType, completedAt, now);
+  return !isCompletedInCurrentPeriod(recurrenceRule as RecurrenceType, completedAt, now);
 }
 
 /**
@@ -133,7 +145,7 @@ export function getNextOccurrence(
 // ─── Streak Estimation ───────────────────────────────────
 
 /**
- * Estimates streak from the item's completed_at relative to now.
+ * Estimates streak from the item's last_completed relative to now.
  * Without a completion history table, we can only determine:
  * - 0: not completed in current period
  * - 1: completed in current period (at least 1)
@@ -141,11 +153,13 @@ export function getNextOccurrence(
  * Returns the estimated streak count.
  */
 export function estimateStreak(item: AtomItem, now: Date = new Date()): number {
-  if (!item.recurrence || !item.completed) return 0;
-  if (item.completed_at === null) return 0;
+  const recurrenceRule = getRecurrenceRule(item);
+  if (!recurrenceRule || item.status !== 'completed') return 0;
+  const lastCompleted = getLastCompleted(item);
+  if (lastCompleted === null) return 0;
 
-  const completedAt = parseISO(item.completed_at);
-  const recurrence = item.recurrence as RecurrenceType;
+  const completedAt = parseISO(lastCompleted);
+  const recurrence = recurrenceRule as RecurrenceType;
 
   if (!isCompletedInCurrentPeriod(recurrence, completedAt, now)) return 0;
 
@@ -159,7 +173,7 @@ export function estimateStreak(item: AtomItem, now: Date = new Date()): number {
 /**
  * Applies virtual reset to a list of items.
  * Returns a new array where recurring items that should reset
- * have completed=false and completed_at=null (in memory only).
+ * have status='active' and last_completed cleared (in memory only).
  *
  * The original items are NOT mutated.
  */
@@ -168,8 +182,14 @@ export function applyVirtualReset(items: AtomItem[], now: Date = new Date()): At
     if (shouldReset(item, now)) {
       return {
         ...item,
-        completed: false,
-        completed_at: null,
+        status: 'active' as const,
+        body: {
+          ...item.body,
+          recurrence: {
+            ...(item.body?.recurrence as RecurrenceExtension | undefined),
+            last_completed: null,
+          },
+        },
         // Keep a reference to the actual DB state for streak display
         _wasCompletedBefore: true,
       } as AtomItem;

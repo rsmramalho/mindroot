@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react';
 import type { ProjectWithChildren } from '@/hooks/useProject';
-import type { AtomItem, UpdateItemPayload } from '@/types/item';
+import type { AtomItem, UpdateItemPayload, Priority } from '@/types/item';
 import { useItemMutations } from '@/hooks/useItemMutations';
 import { useAppStore } from '@/store/app-store';
 import { format, parseISO } from 'date-fns';
@@ -14,6 +14,12 @@ import ModuleBadge from '@/components/shared/ModuleBadge';
 import EmptyState from '@/components/shared/EmptyState';
 import EditSheet from '@/components/shared/EditSheet';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+
+const PRIORITY_DISPLAY: Record<string, { label: string; color: string }> = {
+  high: { label: 'Alta', color: '#d4856a' },
+  medium: { label: 'Média', color: '#c4a882' },
+  low: { label: 'Baixa', color: '#8a9e7a' },
+};
 
 type Pane = 'overview' | 'tasks' | 'notes' | 'timeline';
 
@@ -52,7 +58,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
     }
   };
   const handleArchive = (id: string) => {
-    updateMutation.mutate({ id, updates: { archived: true } });
+    updateMutation.mutate({ id, updates: { status: 'archived' as const } });
   };
   const handleEdit = (id: string, updates: Partial<AtomItem>) => {
     updateMutation.mutate({ id, updates });
@@ -68,7 +74,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
       user_id: user.id,
       title: newTaskTitle.trim(),
       type: 'task',
-      parent_id: project.id,
+      project_id: project.id,
       module: project.module,
     });
     setNewTaskTitle('');
@@ -80,7 +86,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
       user_id: user.id,
       title: newNoteTitle.trim(),
       type: 'note',
-      parent_id: project.id,
+      project_id: project.id,
       module: project.module,
     });
     setNewNoteTitle('');
@@ -93,8 +99,11 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
   }, [data.children]);
 
   // Pending and done tasks
-  const pendingTasks = useMemo(() => tasks.filter((t) => !t.completed), [tasks]);
-  const doneTasks = useMemo(() => tasks.filter((t) => t.completed), [tasks]);
+  const pendingTasks = useMemo(() => tasks.filter((t) => t.status !== 'completed'), [tasks]);
+  const doneTasks = useMemo(() => tasks.filter((t) => t.status === 'completed'), [tasks]);
+
+  const projectPriority = project.body.operations?.priority;
+  const projectNotes = project.notes;
 
   return (
     <div className="flex flex-col gap-0" style={{ paddingBottom: '80px' }}>
@@ -185,7 +194,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
       {/* ━━━ Pane: Overview ━━━ */}
       {activePane === 'overview' && (
         <div className="flex flex-col gap-4">
-          {project.description && (
+          {projectNotes && (
             <p
               style={{
                 fontFamily: 'Inter, sans-serif',
@@ -194,7 +203,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
                 lineHeight: 1.6,
               }}
             >
-              {project.description}
+              {projectNotes}
             </p>
           )}
 
@@ -210,7 +219,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
           </div>
 
           {/* Priority */}
-          {project.priority && (
+          {projectPriority && (
             <div className="flex items-center gap-2">
               <span
                 style={{
@@ -228,16 +237,11 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
                 style={{
                   fontFamily: 'Inter, sans-serif',
                   fontSize: '12px',
-                  color:
-                    project.priority === 'urgente'
-                      ? '#e85d5d'
-                      : project.priority === 'importante'
-                        ? '#e8a84c'
-                        : '#a89478',
+                  color: PRIORITY_DISPLAY[projectPriority]?.color || '#a89478',
                   fontWeight: 500,
                 }}
               >
-                {project.priority}
+                {PRIORITY_DISPLAY[projectPriority]?.label || projectPriority}
               </span>
             </div>
           )}
@@ -409,7 +413,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
                       {format(parseISO(note.created_at), 'd MMM', { locale: ptBR })}
                     </span>
                   </div>
-                  {note.emotion_before && (
+                  {note.body.soul?.emotion_before && (
                     <span
                       style={{
                         fontFamily: 'Inter, sans-serif',
@@ -419,7 +423,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
                         marginTop: '6px',
                       }}
                     >
-                      sentindo {note.emotion_before}
+                      sentindo {note.body.soul.emotion_before}
                     </span>
                   )}
                 </div>
@@ -444,7 +448,7 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
                     style={{
                       width: 8,
                       height: 8,
-                      backgroundColor: item.completed ? '#8a9e7a' : '#a8947840',
+                      backgroundColor: item.status === 'completed' ? '#8a9e7a' : '#a8947840',
                       flexShrink: 0,
                       marginTop: 5,
                     }}
@@ -468,9 +472,9 @@ export default function ProjectSheet({ data, tasks, notes, onBack }: ProjectShee
                     style={{
                       fontFamily: 'Inter, sans-serif',
                       fontSize: '13px',
-                      color: item.completed ? '#a8947860' : '#e8e0d4cc',
+                      color: item.status === 'completed' ? '#a8947860' : '#e8e0d4cc',
                       fontWeight: 400,
-                      textDecoration: item.completed ? 'line-through' : 'none',
+                      textDecoration: item.status === 'completed' ? 'line-through' : 'none',
                     }}
                   >
                     {item.title}

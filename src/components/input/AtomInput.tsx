@@ -106,17 +106,29 @@ export function AtomInput() {
         title: finalParsed.title || value.trim(),
         type: finalParsed.type,
         module: finalParsed.module,
-        priority: finalParsed.priority,
-        emotion_before: finalParsed.emotion_before,
-        emotion_after: finalParsed.emotion_after,
-        needs_checkin: finalParsed.needs_checkin,
-        is_chore: finalParsed.is_chore,
-        energy_cost: finalParsed.energy_cost,
-        due_date: finalParsed.due_date,
-        due_time: finalParsed.due_time,
-        ritual_period: finalParsed.ritual_period,
-        tags: finalParsed.tags,
-        context: finalParsed.context,
+        tags: [
+          ...finalParsed.tags,
+          ...(finalParsed.is_chore ? ['chore'] : []),
+        ],
+        body: {
+          operations: {
+            priority: finalParsed.priority,
+            due_date: finalParsed.due_date,
+            deadline: null,
+            project_status: null,
+            progress_mode: null,
+            progress: null,
+          },
+          soul: {
+            emotion_before: finalParsed.emotion_before,
+            emotion_after: finalParsed.emotion_after,
+            needs_checkin: finalParsed.needs_checkin,
+            energy_level: finalParsed.energy_cost
+              ? finalParsed.energy_cost >= 4 ? 'high' : finalParsed.energy_cost >= 2 ? 'medium' : 'low'
+              : null,
+            ritual_slot: finalParsed.ritual_period,
+          },
+        },
       });
 
       setValue('');

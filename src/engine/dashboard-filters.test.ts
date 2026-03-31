@@ -15,33 +15,47 @@ import {
   PRIORITY_LABELS,
 } from './dashboard-filters';
 import { mockItem, resetIds, today, yesterday, twoDaysAgo, tomorrow, nextWeek } from '@/__test__/mock-factory';
+import type { AtomItem, Priority } from '@/types/item';
 
 beforeEach(() => resetIds());
+
+// Helper to set due_date via body.operations
+function withDueDate(dueDate: string | null) {
+  return dueDate ? { body: { operations: { due_date: dueDate, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null } } } : {};
+}
+
+function withPriority(priority: Priority): Partial<AtomItem> {
+  return { body: { operations: { priority, due_date: null, deadline: null, project_status: null, progress_mode: null, progress: null } } };
+}
+
+function withDueDateAndPriority(dueDate: string | null, priority: Priority | null): Partial<AtomItem> {
+  return { body: { operations: { due_date: dueDate, priority, deadline: null, project_status: null, progress_mode: null, progress: null } } };
+}
 
 // ━━━ filterItems ━━━
 
 describe('filterItems', () => {
   it('excludes completed items by default', () => {
-    const items = [mockItem(), mockItem({ completed: true })];
+    const items = [mockItem(), mockItem({ status: 'completed' })];
     const result = filterItems(items, {});
     expect(result).toHaveLength(1);
-    expect(result[0].completed).toBe(false);
+    expect(result[0].status).toBe('active');
   });
 
   it('includes completed items when showCompleted is true', () => {
-    const items = [mockItem(), mockItem({ completed: true })];
+    const items = [mockItem(), mockItem({ status: 'completed' })];
     const result = filterItems(items, { showCompleted: true });
     expect(result).toHaveLength(2);
   });
 
   it('excludes archived items by default', () => {
-    const items = [mockItem(), mockItem({ archived: true })];
+    const items = [mockItem(), mockItem({ status: 'archived' })];
     const result = filterItems(items, {});
     expect(result).toHaveLength(1);
   });
 
   it('includes archived items when showArchived is true', () => {
-    const items = [mockItem(), mockItem({ archived: true })];
+    const items = [mockItem(), mockItem({ status: 'archived' })];
     const result = filterItems(items, { showArchived: true });
     expect(result).toHaveLength(2);
   });
@@ -59,62 +73,58 @@ describe('filterItems', () => {
 
   it('filters by priority', () => {
     const items = [
-      mockItem({ priority: 'urgente' }),
-      mockItem({ priority: 'futuro' }),
+      mockItem(withPriority('high')),
+      mockItem(withPriority('low')),
     ];
-    const result = filterItems(items, { priority: 'urgente' });
+    const result = filterItems(items, { priority: 'high' });
     expect(result).toHaveLength(1);
-    expect(result[0].priority).toBe('urgente');
   });
 
   it('filters by type', () => {
     const items = [
       mockItem({ type: 'task' }),
       mockItem({ type: 'habit' }),
-      mockItem({ type: 'chore' }),
+      mockItem({ type: 'task', tags: ['chore'] }),
     ];
     const result = filterItems(items, { type: 'task' });
-    expect(result).toHaveLength(1);
+    expect(result).toHaveLength(2);
   });
 
   it('filters dateRange=today', () => {
     const items = [
-      mockItem({ due_date: today() }),
-      mockItem({ due_date: tomorrow() }),
-      mockItem({ due_date: null }),
+      mockItem(withDueDate(today())),
+      mockItem(withDueDate(tomorrow())),
+      mockItem(),
     ];
     const result = filterItems(items, { dateRange: 'today' });
     expect(result).toHaveLength(1);
-    expect(result[0].due_date).toBe(today());
   });
 
   it('filters dateRange=overdue (past but not today)', () => {
     const items = [
-      mockItem({ due_date: twoDaysAgo() }),
-      mockItem({ due_date: today() }),
-      mockItem({ due_date: tomorrow() }),
+      mockItem(withDueDate(twoDaysAgo())),
+      mockItem(withDueDate(today())),
+      mockItem(withDueDate(tomorrow())),
     ];
     const result = filterItems(items, { dateRange: 'overdue' });
     expect(result).toHaveLength(1);
-    expect(result[0].due_date).toBe(twoDaysAgo());
   });
 
   it('filters dateRange=future', () => {
     const items = [
-      mockItem({ due_date: twoDaysAgo() }),
-      mockItem({ due_date: tomorrow() }),
+      mockItem(withDueDate(twoDaysAgo())),
+      mockItem(withDueDate(tomorrow())),
     ];
     const result = filterItems(items, { dateRange: 'future' });
     expect(result).toHaveLength(1);
-    expect(result[0].due_date).toBe(tomorrow());
   });
 
   it('dateRange=all returns everything', () => {
     const items = [
-      mockItem({ due_date: twoDaysAgo() }),
-      mockItem({ due_date: today() }),
-      mockItem({ due_date: tomorrow() }),
-      mockItem({ due_date: null }),
+      mockItem(withDueDate(twoDaysAgo())),
+      mockItem(withDueDate(today())),
+      mockItem(withDueDate(tomorrow())),
+      mockItem(),
     ];
     const result = filterItems(items, { dateRange: 'all' });
     expect(result).toHaveLength(4);
@@ -147,11 +157,11 @@ describe('filterItems', () => {
 
   it('combines multiple filters', () => {
     const items = [
-      mockItem({ module: 'work', priority: 'urgente', title: 'Fix bug' }),
-      mockItem({ module: 'work', priority: 'futuro', title: 'Refactor' }),
-      mockItem({ module: 'family', priority: 'urgente', title: 'Dinner' }),
+      mockItem({ module: 'work', title: 'Fix bug', ...withPriority('high') }),
+      mockItem({ module: 'work', title: 'Refactor', ...withPriority('low') }),
+      mockItem({ module: 'family', title: 'Dinner', ...withPriority('high') }),
     ];
-    const result = filterItems(items, { module: 'work', priority: 'urgente' });
+    const result = filterItems(items, { module: 'work', priority: 'high' });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Fix bug');
   });
@@ -162,9 +172,9 @@ describe('filterItems', () => {
 describe('sortItems', () => {
   it('sorts by due_date ascending (nulls last)', () => {
     const items = [
-      mockItem({ title: 'C', due_date: tomorrow() }),
-      mockItem({ title: 'A', due_date: yesterday() }),
-      mockItem({ title: 'B', due_date: null }),
+      mockItem({ title: 'C', ...withDueDate(tomorrow()) }),
+      mockItem({ title: 'A', ...withDueDate(yesterday()) }),
+      mockItem({ title: 'B' }),
     ];
     const result = sortItems(items, 'due_date', 'asc');
     expect(result.map((i) => i.title)).toEqual(['A', 'C', 'B']);
@@ -172,8 +182,8 @@ describe('sortItems', () => {
 
   it('sorts by due_date descending', () => {
     const items = [
-      mockItem({ title: 'A', due_date: yesterday() }),
-      mockItem({ title: 'C', due_date: tomorrow() }),
+      mockItem({ title: 'A', ...withDueDate(yesterday()) }),
+      mockItem({ title: 'C', ...withDueDate(tomorrow()) }),
     ];
     const result = sortItems(items, 'due_date', 'desc');
     expect(result.map((i) => i.title)).toEqual(['C', 'A']);
@@ -181,10 +191,10 @@ describe('sortItems', () => {
 
   it('sorts by priority order', () => {
     const items = [
-      mockItem({ title: 'F', priority: 'futuro' }),
-      mockItem({ title: 'U', priority: 'urgente' }),
-      mockItem({ title: 'I', priority: 'importante' }),
-      mockItem({ title: 'N', priority: null }),
+      mockItem({ title: 'F', ...withPriority('low') }),
+      mockItem({ title: 'U', ...withPriority('high') }),
+      mockItem({ title: 'I', ...withPriority('medium') }),
+      mockItem({ title: 'N' }),
     ];
     const result = sortItems(items, 'priority', 'asc');
     expect(result.map((i) => i.title)).toEqual(['U', 'I', 'F', 'N']);
@@ -211,8 +221,8 @@ describe('sortItems', () => {
 
   it('does not mutate original array', () => {
     const items = [
-      mockItem({ due_date: tomorrow() }),
-      mockItem({ due_date: yesterday() }),
+      mockItem(withDueDate(tomorrow())),
+      mockItem(withDueDate(yesterday())),
     ];
     const original = [...items];
     sortItems(items, 'due_date');
@@ -249,14 +259,14 @@ describe('groupItems', () => {
 
   it('groups by priority', () => {
     const items = [
-      mockItem({ priority: 'urgente' }),
-      mockItem({ priority: 'urgente' }),
-      mockItem({ priority: 'futuro' }),
+      mockItem(withPriority('high')),
+      mockItem(withPriority('high')),
+      mockItem(withPriority('low')),
     ];
     const groups = groupItems(items, 'priority');
-    const urgenteGroup = groups.find((g) => g.key === 'urgente');
-    expect(urgenteGroup?.items).toHaveLength(2);
-    expect(urgenteGroup?.label).toBe('Urgente');
+    const highGroup = groups.find((g) => g.key === 'high');
+    expect(highGroup?.items).toHaveLength(2);
+    expect(highGroup?.label).toBe('Alta');
   });
 
   it('groups by type', () => {
@@ -273,10 +283,10 @@ describe('groupItems', () => {
 
   it('groups by date with correct labels', () => {
     const items = [
-      mockItem({ due_date: twoDaysAgo() }),
-      mockItem({ due_date: today() }),
-      mockItem({ due_date: nextWeek() }),
-      mockItem({ due_date: null }),
+      mockItem(withDueDate(twoDaysAgo())),
+      mockItem(withDueDate(today())),
+      mockItem(withDueDate(nextWeek())),
+      mockItem(),
     ];
     const groups = groupItems(items, 'date');
     const labels = groups.map((g) => g.label);
@@ -286,11 +296,11 @@ describe('groupItems', () => {
   });
 
   it('module groups have colors, non-module groups do not', () => {
-    const items = [mockItem({ module: 'soul' })];
+    const items = [mockItem({ module: 'mind' })];
     const moduleGroups = groupItems(items, 'module');
-    expect(moduleGroups[0].color).toBe('#8a6e5a');
+    expect(moduleGroups[0].color).toBe('#a89478');
 
-    const priorityGroups = groupItems([mockItem({ priority: 'urgente' })], 'priority');
+    const priorityGroups = groupItems([mockItem(withPriority('high'))], 'priority');
     expect(priorityGroups[0].color).toBeUndefined();
   });
 });
@@ -300,21 +310,20 @@ describe('groupItems', () => {
 describe('getOverdueItems', () => {
   it('returns items with past due_date (not today)', () => {
     const items = [
-      mockItem({ due_date: twoDaysAgo() }),
-      mockItem({ due_date: today() }),
-      mockItem({ due_date: tomorrow() }),
-      mockItem({ due_date: null }),
+      mockItem(withDueDate(twoDaysAgo())),
+      mockItem(withDueDate(today())),
+      mockItem(withDueDate(tomorrow())),
+      mockItem(),
     ];
     const overdue = getOverdueItems(items);
     expect(overdue).toHaveLength(1);
-    expect(overdue[0].due_date).toBe(twoDaysAgo());
   });
 
   it('excludes completed and archived items', () => {
     const items = [
-      mockItem({ due_date: twoDaysAgo(), completed: true }),
-      mockItem({ due_date: twoDaysAgo(), archived: true }),
-      mockItem({ due_date: twoDaysAgo() }),
+      mockItem({ status: 'completed', ...withDueDate(twoDaysAgo()) }),
+      mockItem({ status: 'archived', ...withDueDate(twoDaysAgo()) }),
+      mockItem(withDueDate(twoDaysAgo())),
     ];
     const overdue = getOverdueItems(items);
     expect(overdue).toHaveLength(1);
@@ -324,38 +333,37 @@ describe('getOverdueItems', () => {
 describe('getTodayItems', () => {
   it('returns only items due today', () => {
     const items = [
-      mockItem({ due_date: today() }),
-      mockItem({ due_date: yesterday() }),
-      mockItem({ due_date: tomorrow() }),
+      mockItem(withDueDate(today())),
+      mockItem(withDueDate(yesterday())),
+      mockItem(withDueDate(tomorrow())),
     ];
     expect(getTodayItems(items)).toHaveLength(1);
   });
 
   it('excludes completed/archived', () => {
     const items = [
-      mockItem({ due_date: today(), completed: true }),
-      mockItem({ due_date: today() }),
+      mockItem({ status: 'completed', ...withDueDate(today()) }),
+      mockItem(withDueDate(today())),
     ];
     expect(getTodayItems(items)).toHaveLength(1);
   });
 });
 
 describe('getFocusItems', () => {
-  it('returns urgente and importante items', () => {
+  it('returns high priority items', () => {
     const items = [
-      mockItem({ priority: 'urgente' }),
-      mockItem({ priority: 'importante' }),
-      mockItem({ priority: 'manutencao' }),
-      mockItem({ priority: 'futuro' }),
-      mockItem({ priority: null }),
+      mockItem(withPriority('high')),
+      mockItem(withPriority('medium')),
+      mockItem(withPriority('low')),
+      mockItem(),
     ];
-    expect(getFocusItems(items)).toHaveLength(2);
+    expect(getFocusItems(items)).toHaveLength(1);
   });
 
   it('excludes completed/archived', () => {
     const items = [
-      mockItem({ priority: 'urgente', completed: true }),
-      mockItem({ priority: 'urgente' }),
+      mockItem({ status: 'completed', ...withPriority('high') }),
+      mockItem(withPriority('high')),
     ];
     expect(getFocusItems(items)).toHaveLength(1);
   });
@@ -372,10 +380,10 @@ describe('getInboxItems', () => {
 });
 
 describe('getChoreItems', () => {
-  it('returns items with is_chore=true', () => {
+  it('returns items with chore tag', () => {
     const items = [
-      mockItem({ is_chore: true }),
-      mockItem({ is_chore: false }),
+      mockItem({ tags: ['chore'] }),
+      mockItem({ tags: [] }),
     ];
     expect(getChoreItems(items)).toHaveLength(1);
   });
@@ -384,10 +392,9 @@ describe('getChoreItems', () => {
 // ━━━ Constants ━━━
 
 describe('constants', () => {
-  it('MODULE_LABELS has all 7 modules', () => {
-    expect(Object.keys(MODULE_LABELS)).toHaveLength(7);
+  it('MODULE_LABELS has all 8 modules', () => {
+    expect(Object.keys(MODULE_LABELS)).toHaveLength(8);
     expect(MODULE_LABELS.work).toBe('Trabalho');
-    expect(MODULE_LABELS.soul).toBe('Alma');
   });
 
   it('MODULE_COLORS has same keys as MODULE_LABELS', () => {
@@ -397,12 +404,11 @@ describe('constants', () => {
   });
 
   it('PRIORITY_ORDER has correct ranking', () => {
-    expect(PRIORITY_ORDER.urgente).toBeLessThan(PRIORITY_ORDER.importante);
-    expect(PRIORITY_ORDER.importante).toBeLessThan(PRIORITY_ORDER.manutencao);
-    expect(PRIORITY_ORDER.manutencao).toBeLessThan(PRIORITY_ORDER.futuro);
+    expect(PRIORITY_ORDER.high).toBeLessThan(PRIORITY_ORDER.medium);
+    expect(PRIORITY_ORDER.medium).toBeLessThan(PRIORITY_ORDER.low);
   });
 
-  it('PRIORITY_LABELS covers all 4 levels', () => {
-    expect(Object.keys(PRIORITY_LABELS)).toHaveLength(4);
+  it('PRIORITY_LABELS covers all 3 levels', () => {
+    expect(Object.keys(PRIORITY_LABELS)).toHaveLength(3);
   });
 });

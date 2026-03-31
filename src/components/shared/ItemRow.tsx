@@ -39,10 +39,16 @@ function ItemRow({
   const [editTitle, setEditTitle] = useState(item.title);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const isCompleted = item.completed;
+  const isCompleted = item.status === 'completed';
+  const dueDate = item.body.operations?.due_date;
   const isOverdue =
-    !isCompleted && item.due_date && isPast(startOfDay(new Date(item.due_date))) && !isToday(new Date(item.due_date));
-  const isDueToday = item.due_date && isToday(new Date(item.due_date));
+    !isCompleted && dueDate && isPast(startOfDay(new Date(dueDate))) && !isToday(new Date(dueDate));
+  const isDueToday = dueDate && isToday(new Date(dueDate));
+  const priority = item.body.operations?.priority;
+  const recurrenceRule = item.body.recurrence?.rule;
+  const energyLevel = item.body.soul?.energy_level;
+  const emotionBefore = item.body.soul?.emotion_before;
+  const isChore = item.tags.includes('chore');
 
   const handleToggleComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -82,8 +88,8 @@ function ItemRow({
   };
 
   const formatDueDate = () => {
-    if (!item.due_date) return null;
-    const date = new Date(item.due_date);
+    if (!dueDate) return null;
+    const date = new Date(dueDate);
     if (isToday(date)) return 'Hoje';
     return format(date, "d MMM", { locale: ptBR });
   };
@@ -122,7 +128,7 @@ function ItemRow({
         </button>
 
         {/* Priority dot */}
-        {!isCompleted && <PriorityDot priority={item.priority} />}
+        {!isCompleted && <PriorityDot priority={priority} />}
 
         {/* Title / Edit */}
         <div className="flex-1 min-w-0">
@@ -155,7 +161,7 @@ function ItemRow({
               }}
               className="block truncate"
             >
-              {item.is_chore && (
+              {isChore && (
                 <span style={{ color: '#d4856a', marginRight: '4px', fontSize: '12px' }}>◆</span>
               )}
               {item.title}
@@ -167,7 +173,7 @@ function ItemRow({
         {!compact && <ModuleBadge module={item.module} size="sm" showLabel={false} />}
 
         {/* Recurrence badge */}
-        {!compact && getRecurrenceBadge(item.recurrence) && (
+        {!compact && getRecurrenceBadge(recurrenceRule ?? null) && (
           <span
             style={{
               fontSize: '9px',
@@ -182,7 +188,7 @@ function ItemRow({
               flexShrink: 0,
             }}
           >
-            ↻ {getRecurrenceBadge(item.recurrence)}
+            ↻ {getRecurrenceBadge(recurrenceRule ?? null)}
           </span>
         )}
 
@@ -241,8 +247,8 @@ function ItemRow({
           className="overflow-hidden transition-all duration-200"
           style={{ padding: '0 8px 10px 40px' }}
         >
-          {/* Description preview */}
-          {item.description && (
+          {/* Notes preview */}
+          {item.notes && (
             <p
               className="mb-2"
               style={{
@@ -256,7 +262,7 @@ function ItemRow({
                 overflow: 'hidden',
               }}
             >
-              {item.description}
+              {item.notes}
             </p>
           )}
 
@@ -269,14 +275,14 @@ function ItemRow({
             </div>
           )}
 
-          {/* Energy cost */}
-          {item.energy_cost !== null && (
+          {/* Energy level */}
+          {energyLevel && (
             <div
               className="flex items-center gap-1.5 mb-2"
               style={{ fontSize: '11px', color: '#d4856a', fontFamily: 'Inter, sans-serif' }}
             >
               <span className="flex items-end gap-[1px]">
-                {Array.from({ length: item.energy_cost }).map((_, i) => (
+                {Array.from({ length: energyLevel === 'low' ? 1 : energyLevel === 'medium' ? 3 : 5 }).map((_, i) => (
                   <span
                     key={i}
                     className="inline-block rounded-sm"
@@ -289,19 +295,19 @@ function ItemRow({
                 ))}
               </span>
               <span style={{ opacity: 0.7 }}>
-                energia {item.energy_cost}/5
+                energia {energyLevel}
               </span>
             </div>
           )}
 
           {/* Emotion badge */}
-          {item.emotion_before && (
+          {emotionBefore && (
             <div
               className="flex items-center gap-1.5 mb-2"
               style={{ fontSize: '11px', color: '#a89478', fontFamily: 'Inter, sans-serif' }}
             >
               <span style={{ opacity: 0.5 }}>sentindo</span>
-              <span style={{ fontWeight: 500 }}>{item.emotion_before}</span>
+              <span style={{ fontWeight: 500 }}>{emotionBefore}</span>
             </div>
           )}
 

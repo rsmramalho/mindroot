@@ -8,6 +8,31 @@ import {
   generateInsights,
 } from './insights';
 
+// Helper: create item with soul extension fields
+function withEmotion(emotionBefore: string | null, status: 'active' | 'completed' | 'archived' = 'active') {
+  return {
+    status,
+    body: { soul: { emotion_before: emotionBefore, emotion_after: null, energy_level: null, needs_checkin: false, ritual_slot: null } },
+  } as const;
+}
+
+// Helper: create completed item with deadline (for period/weekday tracking)
+function completedWithDeadline(deadline: string, overrides = {}) {
+  return {
+    status: 'completed' as const,
+    body: { operations: { deadline, due_date: null, priority: null, project_status: null, progress_mode: null, progress: null } },
+    ...overrides,
+  };
+}
+
+// Helper: create item with energy level
+function withEnergy(level: 'high' | 'medium' | 'low', status: 'active' | 'completed' = 'active') {
+  return {
+    status,
+    body: { soul: { energy_level: level, emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null } },
+  } as const;
+}
+
 // ─── computeEmotionProductivity ─────────────────────────────
 
 describe('computeEmotionProductivity', () => {
@@ -18,11 +43,11 @@ describe('computeEmotionProductivity', () => {
 
   it('computes completion rate per emotion', () => {
     const items = [
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
     ];
     const result = computeEmotionProductivity(items);
     const focado = result.find((r) => r.emotion === 'focado');
@@ -35,25 +60,25 @@ describe('computeEmotionProductivity', () => {
 
   it('ignores archived items', () => {
     const items = [
-      mockItem({ emotion_before: 'calmo', completed: true, archived: true }),
-      mockItem({ emotion_before: 'calmo', completed: true, archived: true }),
+      mockItem(withEmotion('calmo', 'archived')),
+      mockItem(withEmotion('calmo', 'archived')),
     ];
     expect(computeEmotionProductivity(items)).toEqual([]);
   });
 
   it('requires min 2 items per emotion', () => {
     const items = [
-      mockItem({ emotion_before: 'grato', completed: true }),
+      mockItem(withEmotion('grato', 'completed')),
     ];
     expect(computeEmotionProductivity(items)).toEqual([]);
   });
 
   it('sorts by completion rate descending', () => {
     const items = [
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: true }),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'completed')),
     ];
     const result = computeEmotionProductivity(items);
     expect(result[0].emotion).toBe('focado');
@@ -76,9 +101,9 @@ describe('computePeriodProductivity', () => {
     const morning2 = new Date(2026, 2, 9, 10, 30).toISOString();
     const afternoon = new Date(2026, 2, 9, 14, 0).toISOString();
     const items = [
-      mockItem({ completed: true, completed_at: morning1 }),
-      mockItem({ completed: true, completed_at: morning2 }),
-      mockItem({ completed: true, completed_at: afternoon }),
+      mockItem(completedWithDeadline(morning1)),
+      mockItem(completedWithDeadline(morning2)),
+      mockItem(completedWithDeadline(afternoon)),
     ];
     const result = computePeriodProductivity(items);
     expect(result.find((p) => p.period === 'manha')?.totalCompleted).toBe(2);
@@ -91,9 +116,9 @@ describe('computePeriodProductivity', () => {
     const t2 = new Date(2026, 2, 9, 10, 0).toISOString();
     const t3 = new Date(2026, 2, 9, 11, 0).toISOString();
     const items = [
-      mockItem({ completed: true, completed_at: t1, module: 'work' }),
-      mockItem({ completed: true, completed_at: t2, module: 'work' }),
-      mockItem({ completed: true, completed_at: t3, module: 'body' }),
+      mockItem({ module: 'work', ...completedWithDeadline(t1) }),
+      mockItem({ module: 'work', ...completedWithDeadline(t2) }),
+      mockItem({ module: 'body', ...completedWithDeadline(t3) }),
     ];
     const result = computePeriodProductivity(items);
     const manha = result.find((p) => p.period === 'manha');
@@ -102,7 +127,7 @@ describe('computePeriodProductivity', () => {
 
   it('ignores non-completed items', () => {
     const items = [
-      mockItem({ completed: false, completed_at: null }),
+      mockItem({ status: 'active' }),
     ];
     const result = computePeriodProductivity(items);
     expect(result.every((p) => p.totalCompleted === 0)).toBe(true);
@@ -122,9 +147,9 @@ describe('computeWeekdayPatterns', () => {
   it('counts completed items per weekday', () => {
     // 2026-03-09 is Monday
     const items = [
-      mockItem({ completed: true, completed_at: '2026-03-09T10:00:00Z' }), // Monday
-      mockItem({ completed: true, completed_at: '2026-03-09T12:00:00Z' }), // Monday
-      mockItem({ completed: true, completed_at: '2026-03-10T10:00:00Z' }), // Tuesday
+      mockItem(completedWithDeadline('2026-03-09T10:00:00Z')), // Monday
+      mockItem(completedWithDeadline('2026-03-09T12:00:00Z')), // Monday
+      mockItem(completedWithDeadline('2026-03-10T10:00:00Z')), // Tuesday
     ];
     const result = computeWeekdayPatterns(items);
     const monday = result.find((w) => w.day === 1);
@@ -135,8 +160,20 @@ describe('computeWeekdayPatterns', () => {
 
   it('computes positive emotion ratio per day', () => {
     const items = [
-      mockItem({ completed: true, completed_at: '2026-03-09T10:00:00Z', emotion_before: 'focado' }),
-      mockItem({ completed: true, completed_at: '2026-03-09T12:00:00Z', emotion_before: 'ansioso' }),
+      mockItem({
+        status: 'completed',
+        body: {
+          operations: { deadline: '2026-03-09T10:00:00Z', due_date: null, priority: null, project_status: null, progress_mode: null, progress: null },
+          soul: { emotion_before: 'focado', emotion_after: null, energy_level: null, needs_checkin: false, ritual_slot: null },
+        },
+      }),
+      mockItem({
+        status: 'completed',
+        body: {
+          operations: { deadline: '2026-03-09T12:00:00Z', due_date: null, priority: null, project_status: null, progress_mode: null, progress: null },
+          soul: { emotion_before: 'ansioso', emotion_after: null, energy_level: null, needs_checkin: false, ritual_slot: null },
+        },
+      }),
     ];
     const result = computeWeekdayPatterns(items);
     const monday = result.find((w) => w.day === 1);
@@ -154,11 +191,11 @@ describe('generateInsights', () => {
 
   it('generates best-emotion insight when data exists', () => {
     const items = [
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
     ];
     const insights = generateInsights(items);
     const bestEmotion = insights.find((i) => i.id === 'best-emotion');
@@ -169,11 +206,11 @@ describe('generateInsights', () => {
 
   it('generates worst-emotion correlation when gap is significant', () => {
     const items = [
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
     ];
     const insights = generateInsights(items);
     const worst = insights.find((i) => i.id === 'worst-emotion');
@@ -183,12 +220,12 @@ describe('generateInsights', () => {
 
   it('generates suggestion for high challenging emotions', () => {
     const items = [
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'cansado', completed: false }),
-      mockItem({ emotion_before: 'cansado', completed: true }),
-      mockItem({ emotion_before: 'frustrado', completed: false }),
-      mockItem({ emotion_before: 'frustrado', completed: false }),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('cansado', 'active')),
+      mockItem(withEmotion('cansado', 'completed')),
+      mockItem(withEmotion('frustrado', 'active')),
+      mockItem(withEmotion('frustrado', 'active')),
     ];
     const insights = generateInsights(items);
     const suggestion = insights.find((i) => i.id === 'suggestion-checkin');
@@ -198,10 +235,10 @@ describe('generateInsights', () => {
 
   it('generates high-energy suggestion when completion is low', () => {
     const items = [
-      mockItem({ energy_cost: 5, completed: false }),
-      mockItem({ energy_cost: 4, completed: false }),
-      mockItem({ energy_cost: 4, completed: false }),
-      mockItem({ energy_cost: 2, completed: true }),
+      mockItem(withEnergy('high', 'active')),
+      mockItem(withEnergy('high', 'active')),
+      mockItem(withEnergy('high', 'active')),
+      mockItem(withEnergy('low', 'completed')),
     ];
     const insights = generateInsights(items);
     const energySuggestion = insights.find((i) => i.id === 'suggestion-energy');
@@ -211,14 +248,14 @@ describe('generateInsights', () => {
 
   it('sorts insights by priority', () => {
     const items = [
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ completed: true, completed_at: '2026-03-09T09:00:00Z' }),
-      mockItem({ completed: true, completed_at: '2026-03-09T10:00:00Z' }),
-      mockItem({ completed: true, completed_at: '2026-03-09T11:00:00Z' }),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(completedWithDeadline('2026-03-09T09:00:00Z')),
+      mockItem(completedWithDeadline('2026-03-09T10:00:00Z')),
+      mockItem(completedWithDeadline('2026-03-09T11:00:00Z')),
     ];
     const insights = generateInsights(items);
     for (let i = 1; i < insights.length; i++) {
@@ -229,10 +266,10 @@ describe('generateInsights', () => {
   it('insight types are valid', () => {
     const validTypes = ['correlation', 'timing', 'pattern', 'suggestion'];
     const items = [
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'focado', completed: true }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
-      mockItem({ emotion_before: 'ansioso', completed: false }),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('focado', 'completed')),
+      mockItem(withEmotion('ansioso', 'active')),
+      mockItem(withEmotion('ansioso', 'active')),
     ];
     const insights = generateInsights(items);
     for (const insight of insights) {

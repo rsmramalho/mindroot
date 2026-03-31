@@ -7,7 +7,7 @@ import { useRitual } from '@/hooks/useRitual';
 import { useItemMutations } from '@/hooks/useItemMutations';
 import { useSoul } from '@/hooks/useSoul';
 import { useRitualStore } from '@/store/ritual-store';
-import type { AtomItem, RitualPeriod } from '@/types/item';
+import type { AtomItem, RitualSlot } from '@/types/item';
 import RitualHabit from './RitualHabit';
 import RitualCheckIn from './RitualCheckIn';
 import CheckInPrompt from '@/components/soul/CheckInPrompt';
@@ -30,12 +30,12 @@ export default function RitualView() {
 
   const handleToggle = useCallback(
     (item: AtomItem) => {
-      if (item.completed) {
+      if (item.status === 'completed') {
         uncompleteMutation.mutate(item.id);
       } else {
         completeMutation.mutate(item.id);
         // Trigger soul check-in if item has needs_checkin
-        onItemComplete({ ...item, completed: true });
+        onItemComplete({ ...item, status: 'completed' });
       }
     },
     [completeMutation, uncompleteMutation, onItemComplete]
@@ -172,7 +172,7 @@ function PeriodSection({
   isCurrent,
   onToggle,
 }: {
-  period: RitualPeriod;
+  period: RitualSlot;
   items: AtomItem[];
   color: string;
   label: string;

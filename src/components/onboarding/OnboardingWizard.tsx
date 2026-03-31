@@ -8,20 +8,20 @@ import { useRitualStore } from '@/store/ritual-store';
 import { useAppStore } from '@/store/app-store';
 import { itemService } from '@/service/item-service';
 import { LogoMark } from '@/components/shared/Logo';
-import type { RitualPeriod, ItemModule } from '@/types/item';
+import type { RitualSlot, AtomModule } from '@/types/item';
 
 // ─── Data ───────────────────────────────────────────────────
 
-const FOCUS_AREAS: { key: ItemModule; label: string; color: string }[] = [
+const FOCUS_AREAS: { key: AtomModule; label: string; color: string }[] = [
   { key: 'work', label: 'Trabalho', color: '#8a9e7a' },
   { key: 'body', label: 'Saude', color: '#b8c4a8' },
   { key: 'family', label: 'Familia', color: '#d4856a' },
   { key: 'mind', label: 'Estudo', color: '#a89478' },
   { key: 'purpose', label: 'Projetos', color: '#c4a882' },
-  { key: 'soul', label: 'Pessoal', color: '#8a6e5a' },
+  { key: 'social', label: 'Pessoal', color: '#9e7a8a' },
 ];
 
-const PERIODS: { key: RitualPeriod; label: string; icon: string; desc: string; color: string }[] = [
+const PERIODS: { key: RitualSlot; label: string; icon: string; desc: string; color: string }[] = [
   {
     key: 'aurora',
     label: 'Aurora',
@@ -45,7 +45,7 @@ const PERIODS: { key: RitualPeriod; label: string; icon: string; desc: string; c
   },
 ];
 
-const PERIOD_PLACEHOLDERS: Record<RitualPeriod, string> = {
+const PERIOD_PLACEHOLDERS: Record<RitualSlot, string> = {
   aurora: 'O que voce pretende fazer hoje?',
   zenite: 'No que voce esta focado agora?',
   crepusculo: 'Como foi seu dia?',
@@ -78,10 +78,10 @@ export function OnboardingWizard() {
 
   // Step 1 state
   const [name, setName] = useState('');
-  const [focusArea, setFocusArea] = useState<ItemModule | null>(null);
+  const [focusArea, setFocusArea] = useState<AtomModule | null>(null);
 
   // Step 2 state
-  const [selectedPeriod, setSelectedPeriod] = useState<RitualPeriod | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<RitualSlot | null>(null);
 
   // Step 3 state
   const [entryText, setEntryText] = useState('');
@@ -118,7 +118,15 @@ export function OnboardingWizard() {
         type: 'task',
         user_id: user.id,
         module: focusArea,
-        ritual_period: selectedPeriod,
+        body: selectedPeriod ? {
+          soul: {
+            ritual_slot: selectedPeriod,
+            emotion_before: null,
+            emotion_after: null,
+            energy_level: null,
+            needs_checkin: false,
+          },
+        } : {},
       });
     } catch {
       // Silently continue — don't block onboarding
@@ -313,8 +321,8 @@ function StepWelcome({
 }: {
   name: string;
   onNameChange: (v: string) => void;
-  focusArea: ItemModule | null;
-  onFocusAreaChange: (v: ItemModule | null) => void;
+  focusArea: AtomModule | null;
+  onFocusAreaChange: (v: AtomModule | null) => void;
 }) {
   return (
     <div className="flex flex-col items-center max-w-sm mx-auto">
@@ -437,8 +445,8 @@ function StepRituals({
   selectedPeriod,
   onPeriodChange,
 }: {
-  selectedPeriod: RitualPeriod | null;
-  onPeriodChange: (p: RitualPeriod) => void;
+  selectedPeriod: RitualSlot | null;
+  onPeriodChange: (p: RitualSlot) => void;
 }) {
   return (
     <div className="flex flex-col items-center max-w-sm mx-auto">

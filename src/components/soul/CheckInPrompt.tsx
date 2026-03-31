@@ -70,7 +70,7 @@ export default function CheckInPrompt({
         {state.phase === 'prompt' && (
           <div className="flex flex-col gap-4 p-6">
             {/* Chore badge */}
-            {state.item?.is_chore && (
+            {state.item?.tags.includes('chore') && (
               <div
                 className="self-start"
                 style={{

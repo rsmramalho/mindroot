@@ -25,26 +25,35 @@ function makeItem(overrides: Partial<AtomItem> = {}): AtomItem {
     title: 'Test ritual',
     type: 'ritual',
     module: 'mind',
-    priority: null,
     tags: [],
-    parent_id: null,
-    completed: false,
-    completed_at: null,
-    archived: false,
-    due_date: null,
-    due_time: null,
-    recurrence: null,
-    ritual_period: 'aurora',
-    emotion_before: null,
-    emotion_after: null,
-    needs_checkin: false,
-    is_chore: false,
-    energy_cost: null,
-    description: null,
-    context: null,
+    status: 'active',
+    state: 'inbox',
+    genesis_stage: 1,
+    project_id: null,
+    naming_convention: null,
+    notes: null,
+    body: {},
+    source: 'mindroot',
     created_at: '2025-01-01T12:00:00Z',
     updated_at: '2025-01-01T12:00:00Z',
+    created_by: null,
     ...overrides,
+  };
+}
+
+// Helper: create recurrence body with rule and optional last_completed
+function withRecurrence(rule: string, lastCompleted: string | null = null, status: 'active' | 'completed' = 'active'): Partial<AtomItem> {
+  return {
+    status,
+    body: {
+      recurrence: {
+        rule,
+        last_completed: lastCompleted,
+        streak_count: 0,
+        completion_log: [] as string[],
+      },
+      soul: { ritual_slot: 'aurora' as const, emotion_before: null, emotion_after: null, energy_level: null, needs_checkin: false },
+    },
   };
 }
 
@@ -58,17 +67,17 @@ function noonUTC(year: number, month: number, day: number): Date {
 
 describe('shouldReset', () => {
   it('returns false for non-recurring items', () => {
-    const item = makeItem({ completed: true, completed_at: '2025-03-01T12:00:00Z' });
+    const item = makeItem({ status: 'completed' });
     expect(shouldReset(item)).toBe(false);
   });
 
   it('returns false for incomplete items', () => {
-    const item = makeItem({ recurrence: 'daily', completed: false });
+    const item = makeItem(withRecurrence('daily'));
     expect(shouldReset(item)).toBe(false);
   });
 
-  it('returns false for completed items without completed_at', () => {
-    const item = makeItem({ recurrence: 'daily', completed: true, completed_at: null });
+  it('returns false for completed items without last_completed', () => {
+    const item = makeItem(withRecurrence('daily', null, 'completed'));
     expect(shouldReset(item)).toBe(false);
   });
 
@@ -77,52 +86,32 @@ describe('shouldReset', () => {
   describe('daily', () => {
     it('returns false when completed today', () => {
       const now = noonUTC(2025, 3, 5);
-      const item = makeItem({
-        recurrence: 'daily',
-        completed: true,
-        completed_at: '2025-03-05T08:00:00Z',
-      });
+      const item = makeItem(withRecurrence('daily', '2025-03-05T08:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
 
     it('returns true when completed yesterday', () => {
       const now = noonUTC(2025, 3, 5);
-      const item = makeItem({
-        recurrence: 'daily',
-        completed: true,
-        completed_at: '2025-03-04T12:00:00Z',
-      });
+      const item = makeItem(withRecurrence('daily', '2025-03-04T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(true);
     });
 
     it('returns true when completed 3 days ago', () => {
       const now = noonUTC(2025, 3, 5);
-      const item = makeItem({
-        recurrence: 'daily',
-        completed: true,
-        completed_at: '2025-03-02T12:00:00Z',
-      });
+      const item = makeItem(withRecurrence('daily', '2025-03-02T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(true);
     });
 
     it('handles completion just before midnight (same day = no reset)', () => {
       const now = noonUTC(2025, 3, 5);
-      const item = makeItem({
-        recurrence: 'daily',
-        completed: true,
-        completed_at: new Date(2025, 2, 5, 23, 59, 0).toISOString(),
-      });
+      const item = makeItem(withRecurrence('daily', new Date(2025, 2, 5, 23, 59, 0).toISOString(), 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
 
     it('handles completion just after midnight (new day = reset)', () => {
       // completed_at is March 5 at 00:01, now is March 6 at noon
       const now = noonUTC(2025, 3, 6);
-      const item = makeItem({
-        recurrence: 'daily',
-        completed: true,
-        completed_at: '2025-03-05T00:01:00Z',
-      });
+      const item = makeItem(withRecurrence('daily', '2025-03-05T00:01:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(true);
     });
   });
@@ -133,33 +122,21 @@ describe('shouldReset', () => {
     it('returns false when completed this week', () => {
       // Wednesday March 5, 2025 — same week as Monday March 3
       const now = noonUTC(2025, 3, 5);
-      const item = makeItem({
-        recurrence: 'weekly',
-        completed: true,
-        completed_at: '2025-03-03T12:00:00Z', // Monday
-      });
+      const item = makeItem(withRecurrence('weekly', '2025-03-03T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
 
     it('returns true when completed last week', () => {
       // Wednesday March 5, 2025 — previous week ended Sunday March 2
       const now = noonUTC(2025, 3, 5);
-      const item = makeItem({
-        recurrence: 'weekly',
-        completed: true,
-        completed_at: '2025-02-26T12:00:00Z', // Previous Wednesday
-      });
+      const item = makeItem(withRecurrence('weekly', '2025-02-26T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(true);
     });
 
     it('returns false on Sunday for item completed on Monday same week', () => {
       // Sunday March 9 (same week as Monday March 3 with weekStartsOn=1)
       const now = noonUTC(2025, 3, 9);
-      const item = makeItem({
-        recurrence: 'weekly',
-        completed: true,
-        completed_at: '2025-03-03T12:00:00Z', // Monday
-      });
+      const item = makeItem(withRecurrence('weekly', '2025-03-03T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
   });
@@ -169,31 +146,19 @@ describe('shouldReset', () => {
   describe('monthly', () => {
     it('returns false when completed this month', () => {
       const now = noonUTC(2025, 3, 15);
-      const item = makeItem({
-        recurrence: 'monthly',
-        completed: true,
-        completed_at: '2025-03-01T12:00:00Z',
-      });
+      const item = makeItem(withRecurrence('monthly', '2025-03-01T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
 
     it('returns true when completed last month', () => {
       const now = noonUTC(2025, 3, 1);
-      const item = makeItem({
-        recurrence: 'monthly',
-        completed: true,
-        completed_at: '2025-02-28T12:00:00Z',
-      });
+      const item = makeItem(withRecurrence('monthly', '2025-02-28T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(true);
     });
 
     it('returns false on last day of month for item completed on first day', () => {
       const now = noonUTC(2025, 3, 31);
-      const item = makeItem({
-        recurrence: 'monthly',
-        completed: true,
-        completed_at: '2025-03-01T12:00:00Z',
-      });
+      const item = makeItem(withRecurrence('monthly', '2025-03-01T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
   });
@@ -204,55 +169,35 @@ describe('shouldReset', () => {
     it('returns false when completed today (weekday)', () => {
       // Wednesday March 5, 2025
       const now = noonUTC(2025, 3, 5);
-      const item = makeItem({
-        recurrence: 'weekdays',
-        completed: true,
-        completed_at: '2025-03-05T12:00:00Z',
-      });
+      const item = makeItem(withRecurrence('weekdays', '2025-03-05T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
 
     it('returns true when completed yesterday (weekday to weekday)', () => {
       // Wednesday March 5
       const now = noonUTC(2025, 3, 5);
-      const item = makeItem({
-        recurrence: 'weekdays',
-        completed: true,
-        completed_at: '2025-03-04T12:00:00Z', // Tuesday
-      });
+      const item = makeItem(withRecurrence('weekdays', '2025-03-04T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(true);
     });
 
     it('does NOT reset on Saturday even if completed on Friday', () => {
       // Saturday March 8, 2025
       const now = noonUTC(2025, 3, 8);
-      const item = makeItem({
-        recurrence: 'weekdays',
-        completed: true,
-        completed_at: '2025-03-07T12:00:00Z', // Friday
-      });
+      const item = makeItem(withRecurrence('weekdays', '2025-03-07T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
 
     it('does NOT reset on Sunday even if completed on Friday', () => {
       // Sunday March 9, 2025
       const now = noonUTC(2025, 3, 9);
-      const item = makeItem({
-        recurrence: 'weekdays',
-        completed: true,
-        completed_at: '2025-03-07T12:00:00Z', // Friday
-      });
+      const item = makeItem(withRecurrence('weekdays', '2025-03-07T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(false);
     });
 
     it('resets on Monday if completed on Friday', () => {
       // Monday March 10, 2025
       const now = noonUTC(2025, 3, 10);
-      const item = makeItem({
-        recurrence: 'weekdays',
-        completed: true,
-        completed_at: '2025-03-07T12:00:00Z', // Friday
-      });
+      const item = makeItem(withRecurrence('weekdays', '2025-03-07T12:00:00Z', 'completed'));
       expect(shouldReset(item, now)).toBe(true);
     });
   });
@@ -335,66 +280,53 @@ describe('getNextOccurrence', () => {
 describe('applyVirtualReset', () => {
   it('does not modify non-recurring items', () => {
     const items = [
-      makeItem({ completed: true, completed_at: '2025-03-01T12:00:00Z' }),
+      makeItem({ status: 'completed' }),
     ];
     const now = noonUTC(2025, 3, 5);
     const result = applyVirtualReset(items, now);
-    expect(result[0].completed).toBe(true);
+    expect(result[0].status).toBe('completed');
   });
 
   it('resets daily recurring items completed yesterday', () => {
     const items = [
-      makeItem({
-        recurrence: 'daily',
-        completed: true,
-        completed_at: '2025-03-04T12:00:00Z',
-      }),
+      makeItem(withRecurrence('daily', '2025-03-04T12:00:00Z', 'completed')),
     ];
     const now = noonUTC(2025, 3, 5);
     const result = applyVirtualReset(items, now);
-    expect(result[0].completed).toBe(false);
-    expect(result[0].completed_at).toBeNull();
+    expect(result[0].status).toBe('active');
   });
 
   it('does not reset daily recurring items completed today', () => {
     const items = [
-      makeItem({
-        recurrence: 'daily',
-        completed: true,
-        completed_at: '2025-03-05T08:00:00Z',
-      }),
+      makeItem(withRecurrence('daily', '2025-03-05T08:00:00Z', 'completed')),
     ];
     const now = noonUTC(2025, 3, 5);
     const result = applyVirtualReset(items, now);
-    expect(result[0].completed).toBe(true);
+    expect(result[0].status).toBe('completed');
   });
 
   it('does not mutate original items', () => {
-    const original = makeItem({
-      recurrence: 'daily',
-      completed: true,
-      completed_at: '2025-03-04T12:00:00Z',
-    });
+    const original = makeItem(withRecurrence('daily', '2025-03-04T12:00:00Z', 'completed'));
     const items = [original];
     const now = noonUTC(2025, 3, 5);
     applyVirtualReset(items, now);
-    expect(original.completed).toBe(true); // Original unchanged
+    expect(original.status).toBe('completed'); // Original unchanged
   });
 
   it('handles mixed recurring and non-recurring items', () => {
     const items = [
-      makeItem({ id: '1', recurrence: 'daily', completed: true, completed_at: '2025-03-04T12:00:00Z' }),
-      makeItem({ id: '2', completed: true, completed_at: '2025-03-04T12:00:00Z' }),
-      makeItem({ id: '3', recurrence: 'daily', completed: true, completed_at: '2025-03-05T08:00:00Z' }),
-      makeItem({ id: '4', completed: false }),
+      makeItem({ id: '1', ...withRecurrence('daily', '2025-03-04T12:00:00Z', 'completed') }),
+      makeItem({ id: '2', status: 'completed' }),
+      makeItem({ id: '3', ...withRecurrence('daily', '2025-03-05T08:00:00Z', 'completed') }),
+      makeItem({ id: '4', status: 'active' }),
     ];
     const now = noonUTC(2025, 3, 5);
     const result = applyVirtualReset(items, now);
 
-    expect(result[0].completed).toBe(false);  // daily, completed yesterday → reset
-    expect(result[1].completed).toBe(true);    // non-recurring → untouched
-    expect(result[2].completed).toBe(true);    // daily, completed today → untouched
-    expect(result[3].completed).toBe(false);   // already incomplete → untouched
+    expect(result[0].status).toBe('active');      // daily, completed yesterday → reset
+    expect(result[1].status).toBe('completed');    // non-recurring → untouched
+    expect(result[2].status).toBe('completed');    // daily, completed today → untouched
+    expect(result[3].status).toBe('active');       // already active → untouched
   });
 });
 
@@ -402,30 +334,22 @@ describe('applyVirtualReset', () => {
 
 describe('estimateStreak', () => {
   it('returns 0 for non-recurring items', () => {
-    const item = makeItem({ completed: true, completed_at: '2025-03-05T12:00:00Z' });
+    const item = makeItem({ status: 'completed' });
     expect(estimateStreak(item, noonUTC(2025, 3, 5))).toBe(0);
   });
 
   it('returns 0 for incomplete recurring items', () => {
-    const item = makeItem({ recurrence: 'daily', completed: false });
+    const item = makeItem(withRecurrence('daily'));
     expect(estimateStreak(item, noonUTC(2025, 3, 5))).toBe(0);
   });
 
   it('returns 1 when completed in current period', () => {
-    const item = makeItem({
-      recurrence: 'daily',
-      completed: true,
-      completed_at: '2025-03-05T12:00:00Z',
-    });
+    const item = makeItem(withRecurrence('daily', '2025-03-05T12:00:00Z', 'completed'));
     expect(estimateStreak(item, noonUTC(2025, 3, 5))).toBe(1);
   });
 
   it('returns 0 when completed in previous period', () => {
-    const item = makeItem({
-      recurrence: 'daily',
-      completed: true,
-      completed_at: '2025-03-04T12:00:00Z',
-    });
+    const item = makeItem(withRecurrence('daily', '2025-03-04T12:00:00Z', 'completed'));
     expect(estimateStreak(item, noonUTC(2025, 3, 5))).toBe(0);
   });
 });

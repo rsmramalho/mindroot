@@ -2,7 +2,7 @@
 // Persists to localStorage, applies CSS variables on change
 
 import { create } from 'zustand';
-import type { ItemModule } from '@/types/item';
+import type { AtomModule } from '@/types/item';
 import type { ThemeMode, DashboardSection, ThemeConfig } from '@/engine/theme';
 import {
   DEFAULT_MODULE_COLORS,
@@ -17,12 +17,12 @@ import {
 
 interface ThemeState {
   mode: ThemeMode;
-  moduleColors: Record<ItemModule, string>;
+  moduleColors: Record<AtomModule, string>;
   dashboardOrder: DashboardSection[];
 
   // Actions
   toggleTheme: () => void;
-  setModuleColor: (module: ItemModule, color: string) => void;
+  setModuleColor: (module: AtomModule, color: string) => void;
   resetModuleColors: () => void;
   moveDashboardSectionUp: (section: DashboardSection) => void;
   moveDashboardSectionDown: (section: DashboardSection) => void;

@@ -1,7 +1,7 @@
 // hooks/useRitual.test.ts — Ritual hook logic tests
 // Tests filtering, grouping by period, progress calculation
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { AtomItem, RitualPeriod } from '@/types/item';
+import type { AtomItem, RitualSlot } from '@/types/item';
 
 // ─── We test the pure logic that useRitual derives ───────
 // Instead of rendering hooks (needs React + providers),
@@ -14,48 +14,57 @@ function makeItem(overrides: Partial<AtomItem> = {}): AtomItem {
     title: 'Test',
     type: 'task',
     module: null,
-    priority: null,
     tags: [],
-    parent_id: null,
-    completed: false,
-    completed_at: null,
-    archived: false,
-    due_date: null,
-    due_time: null,
-    recurrence: null,
-    ritual_period: null,
-    emotion_before: null,
-    emotion_after: null,
-    needs_checkin: false,
-    is_chore: false,
-    energy_cost: null,
-    description: null,
-    context: null,
+    status: 'active',
+    state: 'inbox',
+    genesis_stage: 1,
+    project_id: null,
+    naming_convention: null,
+    notes: null,
+    body: {},
+    source: 'mindroot',
     created_at: '2025-01-01T10:00:00Z',
     updated_at: '2025-01-01T10:00:00Z',
+    created_by: null,
     ...overrides,
   };
+}
+
+// Helper: create ritual item with ritual_slot in body.soul
+function ritualItem(ritualSlot: RitualSlot | null, overrides: Partial<AtomItem> = {}): AtomItem {
+  return makeItem({
+    type: 'ritual',
+    body: {
+      soul: { ritual_slot: ritualSlot, emotion_before: null, emotion_after: null, energy_level: null, needs_checkin: false },
+    },
+    ...overrides,
+  });
 }
 
 // ─── Pure logic extracted from useRitual ─────────────────
 
 function filterRituals(items: AtomItem[]): AtomItem[] {
-  return items.filter((i) => i.type === 'ritual' && !i.archived);
+  return items.filter((i) => i.type === 'ritual' && i.status !== 'archived');
 }
 
-function filterByPeriod(rituals: AtomItem[], period: RitualPeriod): AtomItem[] {
-  return rituals.filter((i) => i.ritual_period === period);
+function getRitualSlot(item: AtomItem): RitualSlot | null {
+  return (item.body?.soul as any)?.ritual_slot ?? null;
 }
 
-function groupByPeriod(rituals: AtomItem[]): Record<RitualPeriod, AtomItem[]> {
-  const grouped: Record<RitualPeriod, AtomItem[]> = {
+function filterByPeriod(rituals: AtomItem[], period: RitualSlot): AtomItem[] {
+  return rituals.filter((i) => getRitualSlot(i) === period);
+}
+
+function groupByPeriod(rituals: AtomItem[]): Record<RitualSlot, AtomItem[]> {
+  const grouped: Record<RitualSlot, AtomItem[]> = {
     aurora: [],
     zenite: [],
     crepusculo: [],
   };
   for (const item of rituals) {
-    if (item.ritual_period && grouped[item.ritual_period]) {
-      grouped[item.ritual_period].push(item);
+    const slot = getRitualSlot(item);
+    if (slot && grouped[slot]) {
+      grouped[slot].push(item);
     }
   }
   return grouped;
@@ -64,21 +73,21 @@ function groupByPeriod(rituals: AtomItem[]): Record<RitualPeriod, AtomItem[]> {
 function calcProgress(periodRituals: AtomItem[]) {
   const total = periodRituals.length;
   if (total === 0) return { total: 0, done: 0, percent: 0 };
-  const done = periodRituals.filter((i) => i.completed).length;
+  const done = periodRituals.filter((i) => i.status === 'completed').length;
   return { total, done, percent: Math.round((done / total) * 100) };
 }
 
 // ─── Sample data (mirrors seed_rituals.sql) ──────────────
 
 const SEED_ITEMS: AtomItem[] = [
-  makeItem({ title: 'Intenção do dia',       type: 'ritual', ritual_period: 'aurora',     module: 'purpose', needs_checkin: true }),
-  makeItem({ title: 'Respiração consciente', type: 'ritual', ritual_period: 'aurora',     module: 'body' }),
-  makeItem({ title: 'Prioridades do dia',    type: 'ritual', ritual_period: 'aurora',     module: 'mind' }),
-  makeItem({ title: 'Pausa de recalibração', type: 'ritual', ritual_period: 'zenite',     module: 'mind',    needs_checkin: true }),
-  makeItem({ title: 'Check-in emocional',    type: 'ritual', ritual_period: 'zenite',     module: 'soul',    needs_checkin: true }),
-  makeItem({ title: 'Gratidão do dia',       type: 'ritual', ritual_period: 'crepusculo', module: 'soul',    needs_checkin: true }),
-  makeItem({ title: 'Revisão do dia',        type: 'ritual', ritual_period: 'crepusculo', module: 'purpose', needs_checkin: true }),
-  makeItem({ title: 'Preparação para amanhã',type: 'ritual', ritual_period: 'crepusculo', module: 'mind' }),
+  ritualItem('aurora', { title: 'Intenção do dia', module: 'purpose', body: { soul: { ritual_slot: 'aurora', needs_checkin: true, emotion_before: null, emotion_after: null, energy_level: null } } }),
+  ritualItem('aurora', { title: 'Respiração consciente', module: 'body' }),
+  ritualItem('aurora', { title: 'Prioridades do dia', module: 'mind' }),
+  ritualItem('zenite', { title: 'Pausa de recalibração', module: 'mind', body: { soul: { ritual_slot: 'zenite', needs_checkin: true, emotion_before: null, emotion_after: null, energy_level: null } } }),
+  ritualItem('zenite', { title: 'Check-in emocional', module: 'purpose', body: { soul: { ritual_slot: 'zenite', needs_checkin: true, emotion_before: null, emotion_after: null, energy_level: null } } }),
+  ritualItem('crepusculo', { title: 'Gratidão do dia', module: 'purpose', body: { soul: { ritual_slot: 'crepusculo', needs_checkin: true, emotion_before: null, emotion_after: null, energy_level: null } } }),
+  ritualItem('crepusculo', { title: 'Revisão do dia', module: 'purpose', body: { soul: { ritual_slot: 'crepusculo', needs_checkin: true, emotion_before: null, emotion_after: null, energy_level: null } } }),
+  ritualItem('crepusculo', { title: 'Preparação para amanhã', module: 'mind' }),
 ];
 
 // ─── Tests ───────────────────────────────────────────────
@@ -98,7 +107,7 @@ describe('filterRituals', () => {
   it('excludes archived rituals', () => {
     const items = [
       ...SEED_ITEMS,
-      makeItem({ type: 'ritual', ritual_period: 'aurora', archived: true, title: 'Archived' }),
+      ritualItem('aurora', { status: 'archived', title: 'Archived' }),
     ];
     const rituals = filterRituals(items);
     expect(rituals).toHaveLength(8);
@@ -137,10 +146,10 @@ describe('groupByPeriod', () => {
     expect(grouped.crepusculo).toHaveLength(3);
   });
 
-  it('ignores items with null ritual_period', () => {
+  it('ignores items with null ritual_slot', () => {
     const rituals = [
-      makeItem({ type: 'ritual', ritual_period: 'aurora' }),
-      makeItem({ type: 'ritual', ritual_period: null }),
+      ritualItem('aurora'),
+      ritualItem(null),
     ];
     const grouped = groupByPeriod(rituals);
     expect(grouped.aurora).toHaveLength(1);
@@ -159,9 +168,9 @@ describe('groupByPeriod', () => {
 describe('calcProgress', () => {
   it('returns 0% when nothing is completed', () => {
     const items = [
-      makeItem({ type: 'ritual', completed: false }),
-      makeItem({ type: 'ritual', completed: false }),
-      makeItem({ type: 'ritual', completed: false }),
+      ritualItem('aurora'),
+      ritualItem('aurora'),
+      ritualItem('aurora'),
     ];
     const progress = calcProgress(items);
     expect(progress).toEqual({ total: 3, done: 0, percent: 0 });
@@ -169,8 +178,8 @@ describe('calcProgress', () => {
 
   it('returns 100% when all completed', () => {
     const items = [
-      makeItem({ type: 'ritual', completed: true }),
-      makeItem({ type: 'ritual', completed: true }),
+      ritualItem('aurora', { status: 'completed' }),
+      ritualItem('aurora', { status: 'completed' }),
     ];
     const progress = calcProgress(items);
     expect(progress).toEqual({ total: 2, done: 2, percent: 100 });
@@ -178,9 +187,9 @@ describe('calcProgress', () => {
 
   it('returns 33% when 1 of 3 completed', () => {
     const items = [
-      makeItem({ type: 'ritual', completed: true }),
-      makeItem({ type: 'ritual', completed: false }),
-      makeItem({ type: 'ritual', completed: false }),
+      ritualItem('aurora', { status: 'completed' }),
+      ritualItem('aurora'),
+      ritualItem('aurora'),
     ];
     const progress = calcProgress(items);
     expect(progress).toEqual({ total: 3, done: 1, percent: 33 });
@@ -188,9 +197,9 @@ describe('calcProgress', () => {
 
   it('returns 67% when 2 of 3 completed', () => {
     const items = [
-      makeItem({ type: 'ritual', completed: true }),
-      makeItem({ type: 'ritual', completed: true }),
-      makeItem({ type: 'ritual', completed: false }),
+      ritualItem('aurora', { status: 'completed' }),
+      ritualItem('aurora', { status: 'completed' }),
+      ritualItem('aurora'),
     ];
     const progress = calcProgress(items);
     expect(progress).toEqual({ total: 3, done: 2, percent: 67 });
@@ -202,12 +211,12 @@ describe('calcProgress', () => {
 
   it('isPeriodComplete is true only when all done', () => {
     const allDone = [
-      makeItem({ type: 'ritual', completed: true }),
-      makeItem({ type: 'ritual', completed: true }),
+      ritualItem('aurora', { status: 'completed' }),
+      ritualItem('aurora', { status: 'completed' }),
     ];
     const partial = [
-      makeItem({ type: 'ritual', completed: true }),
-      makeItem({ type: 'ritual', completed: false }),
+      ritualItem('aurora', { status: 'completed' }),
+      ritualItem('aurora'),
     ];
     const empty: AtomItem[] = [];
 

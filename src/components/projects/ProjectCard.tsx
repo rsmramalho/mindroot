@@ -4,6 +4,12 @@
 import type { ProjectWithChildren } from '@/hooks/useProject';
 import ModuleBadge from '@/components/shared/ModuleBadge';
 
+const PRIORITY_DISPLAY: Record<string, { label: string; color: string }> = {
+  high: { label: 'Alta', color: '#d4856a' },
+  medium: { label: 'Média', color: '#c4a882' },
+  low: { label: 'Baixa', color: '#8a9e7a' },
+};
+
 interface ProjectCardProps {
   data: ProjectWithChildren;
   onClick: () => void;
@@ -11,6 +17,8 @@ interface ProjectCardProps {
 
 export default function ProjectCard({ data, onClick }: ProjectCardProps) {
   const { project, totalTasks, completedTasks, progress } = data;
+  const projectPriority = project.body.operations?.priority;
+  const projectNotes = project.notes;
 
   return (
     <button
@@ -40,8 +48,8 @@ export default function ProjectCard({ data, onClick }: ProjectCardProps) {
         <ModuleBadge module={project.module} size="sm" showLabel={false} />
       </div>
 
-      {/* Description preview */}
-      {project.description && (
+      {/* Notes preview */}
+      {projectNotes && (
         <p
           className="truncate mb-3"
           style={{
@@ -51,7 +59,7 @@ export default function ProjectCard({ data, onClick }: ProjectCardProps) {
             fontWeight: 400,
           }}
         >
-          {project.description}
+          {projectNotes}
         </p>
       )}
 
@@ -95,19 +103,14 @@ export default function ProjectCard({ data, onClick }: ProjectCardProps) {
       </div>
 
       {/* Priority indicator */}
-      {project.priority && (
+      {projectPriority && (
         <div className="mt-3 flex items-center gap-1.5">
           <span
             className="inline-block rounded-full"
             style={{
               width: 6,
               height: 6,
-              backgroundColor:
-                project.priority === 'urgente'
-                  ? '#e85d5d'
-                  : project.priority === 'importante'
-                    ? '#e8a84c'
-                    : '#6b7280',
+              backgroundColor: PRIORITY_DISPLAY[projectPriority]?.color || '#6b7280',
             }}
           />
           <span
@@ -120,7 +123,7 @@ export default function ProjectCard({ data, onClick }: ProjectCardProps) {
               letterSpacing: '0.06em',
             }}
           >
-            {project.priority}
+            {PRIORITY_DISPLAY[projectPriority]?.label || projectPriority}
           </span>
         </div>
       )}

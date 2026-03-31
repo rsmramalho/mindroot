@@ -2,7 +2,7 @@
 // alpha.11: Local notification scheduling, period transitions, overdue reminders
 
 import { getCurrentPeriod, RITUAL_PERIODS } from '@/types/ui';
-import type { RitualPeriod, AtomItem } from '@/types/item';
+import type { RitualSlot, AtomItem, OperationsExtension } from '@/types/item';
 import { isPast, startOfDay, isToday } from 'date-fns';
 
 export const notificationService = {
@@ -70,7 +70,7 @@ export const notificationService = {
 
   // ─── Period transition detection ────────────────────────
 
-  checkPeriodTransition(lastPeriod: RitualPeriod): RitualPeriod | null {
+  checkPeriodTransition(lastPeriod: RitualSlot): RitualSlot | null {
     const current = getCurrentPeriod();
     if (current.key !== lastPeriod) {
       return current.key;
@@ -110,9 +110,10 @@ export const notificationService = {
 
   countOverdueItems(items: AtomItem[]): number {
     return items.filter((item) => {
-      if (item.completed || item.archived) return false;
-      if (!item.due_date) return false;
-      const due = new Date(item.due_date);
+      if (item.status === 'completed' || item.status === 'archived') return false;
+      const dueDate = (item.body?.operations as OperationsExtension | undefined)?.due_date;
+      if (!dueDate) return false;
+      const due = new Date(dueDate);
       return isPast(startOfDay(due)) && !isToday(due);
     }).length;
   },
@@ -131,4 +132,3 @@ export const notificationService = {
     this._pendingRitualCount = count;
   },
 };
-

@@ -2,7 +2,7 @@
 // Pure logic: analyzes emotional/productivity patterns → max 3 actionable suggestions
 // All text in pt-BR
 
-import type { AtomItem, Emotion, ItemModule } from '@/types/item';
+import type { AtomItem, Emotion, AtomModule, OperationsExtension, SoulExtension } from '@/types/item';
 import { POSITIVE_EMOTIONS, CHALLENGING_EMOTIONS, MODULES } from '@/types/item';
 import { parseISO, getHours, isToday, isPast, startOfDay, differenceInDays, subDays } from 'date-fns';
 
@@ -13,7 +13,7 @@ export interface AiSuggestion {
   text: string;
   action: 'reschedule' | 'break-down' | 'checkin' | 'reorder' | 'pause' | 'celebrate';
   context: string; // short explanation of why
-  module: ItemModule | null;
+  module: AtomModule | null;
   priority: number; // 1=highest
 }
 
@@ -39,20 +39,56 @@ const PERIOD_LABELS: Record<string, string> = {
   noite: 'noite',
 };
 
-const MODULE_LABELS: Record<ItemModule, string> = {
+const MODULE_LABELS: Record<AtomModule, string> = {
   purpose: 'Proposito',
   work: 'Trabalho',
   family: 'Familia',
   body: 'Corpo',
   mind: 'Mente',
-  soul: 'Alma',
+  bridge: 'Ponte',
+  finance: 'Financas',
+  social: 'Social',
 };
+
+// ─── Helpers ────────────────────────────────────────────────
+
+function getEmotionBefore(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.emotion_before ?? null;
+}
+
+function getEmotionAfter(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.emotion_after ?? null;
+}
+
+function getDueDate(item: AtomItem): string | null {
+  return (item.body?.operations as OperationsExtension | undefined)?.due_date ?? null;
+}
+
+function getEnergyLevel(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.energy_level ?? null;
+}
+
+function getDeadline(item: AtomItem): string | null {
+  return (item.body?.operations as OperationsExtension | undefined)?.deadline ?? null;
+}
+
+function isCompleted(item: AtomItem): boolean {
+  return item.status === 'completed';
+}
+
+function isArchived(item: AtomItem): boolean {
+  return item.status === 'archived';
+}
+
+function isActive(item: AtomItem): boolean {
+  return item.status !== 'completed' && item.status !== 'archived';
+}
 
 // ─── Core: generate contextual suggestions ───────────────────
 
 export function generateAiSuggestions(items: AtomItem[]): AiSuggestion[] {
   const suggestions: AiSuggestion[] = [];
-  const nonArchived = items.filter((i) => !i.archived);
+  const nonArchived = items.filter((i) => !isArchived(i));
   const cutoff = subDays(new Date(), RECENT_DAYS);
   const recentItems = nonArchived.filter((i) => parseISO(i.created_at) >= cutoff);
 
@@ -111,7 +147,7 @@ function detectProcrastination(
 
     const entry = moduleCompletionByPeriod.get(key) || { created: 0, completed: 0 };
     entry.created++;
-    if (item.completed) entry.completed++;
+    if (isCompleted(item)) entry.completed++;
     moduleCompletionByPeriod.set(key, entry);
   }
 
@@ -133,7 +169,7 @@ function detectProcrastination(
 
   if (!worstKey) return null;
 
-  const [mod, period] = worstKey.split(':') as [ItemModule, string];
+  const [mod, period] = worstKey.split(':') as [AtomModule, string];
   const modLabel = MODULE_LABELS[mod];
 
   // Find the best period for this module
@@ -171,15 +207,16 @@ function detectEmotionTimingPattern(
   const periodEmotions = new Map<string, { positive: number; challenging: number; total: number }>();
 
   for (const item of items) {
-    if (!item.emotion_before || !item.completed) continue;
-    const doneAt = item.completed_at;
-    if (doneAt === null) continue;
-    const hour = getHours(parseISO(doneAt));
+    const emotionBefore = getEmotionBefore(item);
+    if (!emotionBefore || !isCompleted(item)) continue;
+    const deadline = getDeadline(item);
+    if (deadline === null) continue;
+    const hour = getHours(parseISO(deadline));
     const period = getPeriod(hour);
     const entry = periodEmotions.get(period) || { positive: 0, challenging: 0, total: 0 };
     entry.total++;
-    if (POSITIVE_EMOTIONS.includes(item.emotion_before)) entry.positive++;
-    if (CHALLENGING_EMOTIONS.includes(item.emotion_before)) entry.challenging++;
+    if (POSITIVE_EMOTIONS.includes(emotionBefore as Emotion)) entry.positive++;
+    if (CHALLENGING_EMOTIONS.includes(emotionBefore as Emotion)) entry.challenging++;
     periodEmotions.set(period, entry);
   }
 
@@ -218,15 +255,17 @@ function detectEmotionTimingPattern(
 
 function detectOverdueCluster(items: AtomItem[]): AiSuggestion | null {
   const overdue = items.filter((i) => {
-    if (i.completed || !i.due_date) return false;
-    const due = new Date(i.due_date);
+    if (isCompleted(i)) return false;
+    const dueDate = getDueDate(i);
+    if (!dueDate) return false;
+    const due = new Date(dueDate);
     return isPast(startOfDay(due)) && !isToday(due);
   });
 
   if (overdue.length < 3) return null;
 
   // Check if overdue items cluster in a module
-  const moduleCounts = new Map<ItemModule, number>();
+  const moduleCounts = new Map<AtomModule, number>();
   for (const item of overdue) {
     if (item.module) {
       moduleCounts.set(item.module, (moduleCounts.get(item.module) || 0) + 1);
@@ -264,9 +303,11 @@ function detectOverdueCluster(items: AtomItem[]): AiSuggestion | null {
 function detectEnergyOverload(items: AtomItem[]): AiSuggestion | null {
   // Check today's pending high-energy items
   const todayHighEnergy = items.filter((i) => {
-    if (i.completed || !i.due_date) return false;
-    if (!isToday(new Date(i.due_date))) return false;
-    return i.energy_cost !== null && i.energy_cost >= 4;
+    if (isCompleted(i)) return false;
+    const dueDate = getDueDate(i);
+    if (!dueDate) return false;
+    if (!isToday(new Date(dueDate))) return false;
+    return getEnergyLevel(i) === 'high';
   });
 
   if (todayHighEnergy.length >= 3) {
@@ -286,20 +327,23 @@ function detectEnergyOverload(items: AtomItem[]): AiSuggestion | null {
 function detectPositiveStreak(items: AtomItem[]): AiSuggestion | null {
   // Check for positive emotion streak in recent completions
   const recentCompleted = items
-    .filter((i) => i.completed && i.emotion_after && i.completed_at)
-    .sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime())
+    .filter((i) => isCompleted(i) && getEmotionAfter(i) && getDeadline(i))
+    .sort((a, b) => new Date(getDeadline(b)!).getTime() - new Date(getDeadline(a)!).getTime())
     .slice(0, 5);
 
   if (recentCompleted.length < 3) return null;
 
   const allPositive = recentCompleted.every(
-    (i) => i.emotion_after && POSITIVE_EMOTIONS.includes(i.emotion_after)
+    (i) => {
+      const emotionAfter = getEmotionAfter(i);
+      return emotionAfter && POSITIVE_EMOTIONS.includes(emotionAfter as Emotion);
+    }
   );
 
   if (allPositive) {
     const daysSinceFirst = differenceInDays(
       new Date(),
-      parseISO(recentCompleted[recentCompleted.length - 1].completed_at!)
+      parseISO(getDeadline(recentCompleted[recentCompleted.length - 1])!)
     );
 
     return {
@@ -322,13 +366,16 @@ function detectCurrentPeriodEmotionRisk(
   // Look at items created in the current period over the last 2 weeks
   const periodItems = recentItems.filter((i) => {
     const hour = getHours(parseISO(i.created_at));
-    return getPeriod(hour) === currentPeriod && i.emotion_before;
+    return getPeriod(hour) === currentPeriod && getEmotionBefore(i);
   });
 
   if (periodItems.length < MIN_DATA_POINTS) return null;
 
   const challenging = periodItems.filter(
-    (i) => i.emotion_before && CHALLENGING_EMOTIONS.includes(i.emotion_before)
+    (i) => {
+      const emotionBefore = getEmotionBefore(i);
+      return emotionBefore && CHALLENGING_EMOTIONS.includes(emotionBefore as Emotion);
+    }
   );
 
   const ratio = challenging.length / periodItems.length;
@@ -337,8 +384,9 @@ function detectCurrentPeriodEmotionRisk(
   // Find the dominant challenging emotion
   const emotionCounts = new Map<Emotion, number>();
   for (const item of challenging) {
-    if (item.emotion_before) {
-      emotionCounts.set(item.emotion_before, (emotionCounts.get(item.emotion_before) || 0) + 1);
+    const emotionBefore = getEmotionBefore(item) as Emotion | null;
+    if (emotionBefore) {
+      emotionCounts.set(emotionBefore, (emotionCounts.get(emotionBefore) || 0) + 1);
     }
   }
 
@@ -358,12 +406,12 @@ function detectCurrentPeriodEmotionRisk(
 function detectModuleImbalance(items: AtomItem[]): AiSuggestion | null {
   const cutoff = subDays(new Date(), RECENT_DAYS);
   const recentActive = items.filter(
-    (i) => !i.completed && !i.archived && i.module && parseISO(i.created_at) >= cutoff
+    (i) => isActive(i) && i.module && parseISO(i.created_at) >= cutoff
   );
 
   if (recentActive.length < 6) return null;
 
-  const moduleCounts = new Map<ItemModule, number>();
+  const moduleCounts = new Map<AtomModule, number>();
   for (const item of recentActive) {
     if (item.module) {
       moduleCounts.set(item.module, (moduleCounts.get(item.module) || 0) + 1);

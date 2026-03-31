@@ -4,14 +4,14 @@
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Emotion, RitualPeriod } from '@/types/item';
+import type { Emotion, RitualSlot } from '@/types/item';
 import { useItemMutations } from '@/hooks/useItemMutations';
 import { useAppStore } from '@/store/app-store';
 import { useRitualStore } from '@/store/ritual-store';
 import EmotionPicker from '@/components/soul/EmotionPicker';
 
 interface RitualCheckInProps {
-  period: RitualPeriod;
+  period: RitualSlot;
   periodColor: string;
   prompt: string;
   isPeriodComplete: boolean;
@@ -53,13 +53,19 @@ export default function RitualCheckIn({
       await createItem.mutateAsync({
         user_id: user.id,
         title,
-        type: 'journal',
-        module: 'soul',
-        emotion_after: selectedEmotion,
-        ritual_period: period,
+        type: 'log',
+        module: 'mind',
+        body: {
+          soul: {
+            emotion_after: selectedEmotion,
+            emotion_before: null,
+            energy_level: null,
+            needs_checkin: false,
+            ritual_slot: period,
+          },
+        },
         tags: ['ritual_checkin', period],
-        description: reflection.trim() || null,
-        context: `Check-in ${periodLabel}`,
+        notes: reflection.trim() || null,
       });
 
       setCurrentEmotion(selectedEmotion);

@@ -1,19 +1,19 @@
 // components/shared/EnergyPicker.tsx
-// 1-5 energy cost selector — visual bar scale
+// Energy level selector — high/medium/low
 // Used in EditSheet
 
+import type { EnergyLevel } from '@/types/item';
+
 interface EnergyPickerProps {
-  value: number | null;
-  onChange: (energy: number | null) => void;
+  value: EnergyLevel | null;
+  onChange: (energy: EnergyLevel | null) => void;
 }
 
-const ENERGY_LABELS: Record<number, string> = {
-  1: 'Leve',
-  2: 'Baixo',
-  3: 'Medio',
-  4: 'Alto',
-  5: 'Intenso',
-};
+const ENERGY_OPTIONS: { key: EnergyLevel; label: string; bars: number }[] = [
+  { key: 'low', label: 'Baixo', bars: 1 },
+  { key: 'medium', label: 'Medio', bars: 3 },
+  { key: 'high', label: 'Alto', bars: 5 },
+];
 
 const ENERGY_COLOR = '#d4856a';
 
@@ -30,35 +30,34 @@ export default function EnergyPicker({ value, onChange }: EnergyPickerProps) {
           letterSpacing: '0.08em',
         }}
       >
-        Custo energetico
+        Nivel de energia
       </label>
       <div className="flex items-center gap-2">
-        {[1, 2, 3, 4, 5].map((level) => {
-          const selected = value === level;
-          const active = value !== null && level <= value;
+        {ENERGY_OPTIONS.map(({ key, label, bars }) => {
+          const selected = value === key;
           return (
             <button
-              key={level}
+              key={key}
               type="button"
-              onClick={() => onChange(selected ? null : level)}
+              onClick={() => onChange(selected ? null : key)}
               className="flex-1 flex flex-col items-center gap-1 rounded-lg transition-all duration-150"
               style={{
                 padding: '8px 4px',
-                backgroundColor: active ? `${ENERGY_COLOR}15` : '#a8947808',
-                border: `1px solid ${active ? `${ENERGY_COLOR}40` : '#a8947815'}`,
+                backgroundColor: selected ? `${ENERGY_COLOR}15` : '#a8947808',
+                border: `1px solid ${selected ? `${ENERGY_COLOR}40` : '#a8947815'}`,
               }}
-              title={ENERGY_LABELS[level]}
-              aria-label={ENERGY_LABELS[level]}
+              title={label}
+              aria-label={label}
             >
               <div className="flex items-end gap-[2px]" style={{ height: 16 }}>
-                {Array.from({ length: level }).map((_, i) => (
+                {Array.from({ length: bars }).map((_, i) => (
                   <div
                     key={i}
                     className="rounded-sm transition-all duration-150"
                     style={{
                       width: 3,
                       height: 4 + i * 3,
-                      backgroundColor: active ? ENERGY_COLOR : '#a8947830',
+                      backgroundColor: selected ? ENERGY_COLOR : '#a8947830',
                     }}
                   />
                 ))}
@@ -68,10 +67,10 @@ export default function EnergyPicker({ value, onChange }: EnergyPickerProps) {
                   fontSize: '9px',
                   fontFamily: 'Inter, sans-serif',
                   fontWeight: selected ? 600 : 400,
-                  color: active ? ENERGY_COLOR : '#a8947850',
+                  color: selected ? ENERGY_COLOR : '#a8947850',
                 }}
               >
-                {ENERGY_LABELS[level]}
+                {label}
               </span>
             </button>
           );
@@ -81,4 +80,4 @@ export default function EnergyPicker({ value, onChange }: EnergyPickerProps) {
   );
 }
 
-export { ENERGY_LABELS, ENERGY_COLOR };
+export { ENERGY_OPTIONS, ENERGY_COLOR };

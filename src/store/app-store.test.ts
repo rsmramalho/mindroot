@@ -65,9 +65,9 @@ describe('AppStore — Filters', () => {
 
   it('setFilter preserves other keys', () => {
     useAppStore.getState().setFilter('module', 'work');
-    useAppStore.getState().setFilter('priority', 'urgente');
+    useAppStore.getState().setFilter('priority', 'high');
     expect(useAppStore.getState().filters.module).toBe('work');
-    expect(useAppStore.getState().filters.priority).toBe('urgente');
+    expect(useAppStore.getState().filters.priority).toBe('high');
   });
 
   it('setFilter for search', () => {

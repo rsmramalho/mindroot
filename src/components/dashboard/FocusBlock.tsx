@@ -1,5 +1,5 @@
 // components/dashboard/FocusBlock.tsx
-// Bloco de foco: urgente + importante no topo do dashboard
+// Bloco de foco: high priority no topo do dashboard
 // Visual destacado, tipografia Cormorant
 
 
@@ -58,7 +58,7 @@ export default function FocusBlock({ items, onComplete }: FocusBlockProps) {
             />
 
             {/* Priority */}
-            <PriorityDot priority={item.priority} />
+            <PriorityDot priority={item.body.operations?.priority} />
 
             {/* Title */}
             <span
@@ -71,7 +71,7 @@ export default function FocusBlock({ items, onComplete }: FocusBlockProps) {
                 letterSpacing: '-0.01em',
               }}
             >
-              {item.is_chore && (
+              {item.tags.includes('chore') && (
                 <span style={{ color: '#d4856a', marginRight: '5px', fontSize: '13px' }}>◆</span>
               )}
               {item.title}

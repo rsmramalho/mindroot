@@ -1,11 +1,11 @@
 // components/shared/EditSheet.tsx
 // Bottom sheet de edição completa de um AtomItem
-// Campos: título, módulo, prioridade, due_date, tags, description
+// Campos: título, módulo, prioridade, due_date, tags, notes
 // emotion_before/after: read-only
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { AtomItem, UpdateItemPayload, ItemModule, ItemPriority } from '@/types/item';
+import type { AtomItem, UpdateItemPayload, AtomModule, Priority, EnergyLevel } from '@/types/item';
 import ModulePicker from './ModulePicker';
 import PriorityPicker from './PriorityPicker';
 import EnergyPicker from './EnergyPicker';
@@ -20,14 +20,14 @@ interface EditSheetProps {
 
 export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
   const [title, setTitle] = useState('');
-  const [module, setModule] = useState<ItemModule | null>(null);
-  const [priority, setPriority] = useState<ItemPriority | null>(null);
+  const [module, setModule] = useState<AtomModule | null>(null);
+  const [priority, setPriority] = useState<Priority | null>(null);
   const [dueDate, setDueDate] = useState('');
   const [recurrence, setRecurrence] = useState<string | null>(null);
-  const [energyCost, setEnergyCost] = useState<number | null>(null);
+  const [energyLevel, setEnergyLevel] = useState<EnergyLevel | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
-  const [description, setDescription] = useState('');
+  const [notes, setNotes] = useState('');
   const titleRef = useRef<HTMLInputElement>(null);
 
   // Sync state when item changes
@@ -35,12 +35,12 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
     if (item) {
       setTitle(item.title);
       setModule(item.module);
-      setPriority(item.priority);
-      setDueDate(item.due_date ? item.due_date.split('T')[0] : '');
-      setRecurrence(item.recurrence || null);
-      setEnergyCost(item.energy_cost ?? null);
+      setPriority(item.body.operations?.priority ?? null);
+      setDueDate(item.body.operations?.due_date ? item.body.operations.due_date.split('T')[0] : '');
+      setRecurrence(item.body.recurrence?.rule || null);
+      setEnergyLevel(item.body.soul?.energy_level ?? null);
       setTags(item.tags || []);
-      setDescription(item.description || '');
+      setNotes(item.notes || '');
       setTimeout(() => titleRef.current?.focus(), 200);
     }
   }, [item]);
@@ -62,16 +62,41 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
 
     if (title.trim() !== item.title) updates.title = title.trim();
     if (module !== item.module) updates.module = module;
-    if (priority !== item.priority) updates.priority = priority;
+
+    const oldPriority = item.body.operations?.priority ?? null;
+    if (priority !== oldPriority) {
+      updates.body = {
+        ...updates.body,
+        operations: { ...item.body.operations, ...updates.body?.operations, priority } as any,
+      };
+    }
 
     const newDueDate = dueDate || null;
-    const oldDueDate = item.due_date ? item.due_date.split('T')[0] : null;
-    if (newDueDate !== oldDueDate) updates.due_date = newDueDate;
+    const oldDueDate = item.body.operations?.due_date ? item.body.operations.due_date.split('T')[0] : null;
+    if (newDueDate !== oldDueDate) {
+      updates.body = {
+        ...updates.body,
+        operations: { ...item.body.operations, ...updates.body?.operations, due_date: newDueDate } as any,
+      };
+    }
 
     if (JSON.stringify(tags) !== JSON.stringify(item.tags)) updates.tags = tags;
-    if (description !== (item.description || '')) updates.description = description || null;
-    if (recurrence !== (item.recurrence || null)) updates.recurrence = recurrence;
-    if (energyCost !== (item.energy_cost ?? null)) updates.energy_cost = energyCost;
+    if (notes !== (item.notes || '')) updates.notes = notes || null;
+
+    if (recurrence !== (item.body.recurrence?.rule || null)) {
+      updates.body = {
+        ...updates.body,
+        recurrence: { ...item.body.recurrence, ...updates.body?.recurrence, rule: recurrence } as any,
+      };
+    }
+
+    const oldEnergyLevel = item.body.soul?.energy_level ?? null;
+    if (energyLevel !== oldEnergyLevel) {
+      updates.body = {
+        ...updates.body,
+        soul: { ...item.body.soul, ...updates.body?.soul, energy_level: energyLevel } as any,
+      };
+    }
 
     // Only save if something changed
     if (Object.keys(updates).length > 0) {
@@ -241,8 +266,8 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
               {/* Recurrence */}
               <RecurrencePicker value={recurrence} onChange={setRecurrence} />
 
-              {/* Energy Cost */}
-              <EnergyPicker value={energyCost} onChange={setEnergyCost} />
+              {/* Energy Level */}
+              <EnergyPicker value={energyLevel} onChange={setEnergyLevel} />
 
               {/* Due Date */}
               <div className="flex flex-col gap-1.5">
@@ -346,7 +371,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
                 </div>
               </div>
 
-              {/* Description */}
+              {/* Notes (was Description) */}
               <div className="flex flex-col gap-1.5">
                 <label
                   style={{
@@ -358,11 +383,11 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
                     letterSpacing: '0.08em',
                   }}
                 >
-                  Descrição
+                  Notas
                 </label>
                 <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                   rows={3}
                   placeholder="Notas, contexto, detalhes..."
                   className="bg-transparent outline-none resize-none"
@@ -380,7 +405,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
               </div>
 
               {/* Emotion (read-only) */}
-              {(item.emotion_before || item.emotion_after) && (
+              {(item.body.soul?.emotion_before || item.body.soul?.emotion_after) && (
                 <div className="flex flex-col gap-1.5">
                   <label
                     style={{
@@ -403,7 +428,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
                       border: '1px solid #a8947810',
                     }}
                   >
-                    {item.emotion_before && (
+                    {item.body.soul?.emotion_before && (
                       <div className="flex items-center gap-1.5">
                         <span
                           style={{
@@ -422,14 +447,14 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
                             color: '#c4a882',
                           }}
                         >
-                          {item.emotion_before}
+                          {item.body.soul.emotion_before}
                         </span>
                       </div>
                     )}
-                    {item.emotion_before && item.emotion_after && (
+                    {item.body.soul?.emotion_before && item.body.soul?.emotion_after && (
                       <span style={{ color: '#a8947830', fontSize: '12px' }}>→</span>
                     )}
-                    {item.emotion_after && (
+                    {item.body.soul?.emotion_after && (
                       <div className="flex items-center gap-1.5">
                         <span
                           style={{
@@ -448,7 +473,7 @@ export default function EditSheet({ item, onSave, onClose }: EditSheetProps) {
                             color: '#8a9e7a',
                           }}
                         >
-                          {item.emotion_after}
+                          {item.body.soul.emotion_after}
                         </span>
                       </div>
                     )}

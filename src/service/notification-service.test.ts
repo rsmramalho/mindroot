@@ -1,6 +1,7 @@
 // service/notification-service.test.ts
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { notificationService } from './notification-service';
+import type { AtomItem } from '@/types/item';
 
 // Mock getCurrentPeriod and RITUAL_PERIODS
 vi.mock('@/types/ui', () => ({
@@ -130,14 +131,13 @@ describe('notificationService.getPermissionState', () => {
 });
 
 describe('notificationService.countOverdueItems', () => {
-  const makeItem = (due_date: string | null, completed = false, archived = false) => ({
-    id: '1', user_id: 'u', title: 't', type: 'task' as const,
-    module: null, priority: null, tags: [], parent_id: null,
-    completed, completed_at: null, archived, due_date,
-    due_time: null, recurrence: null, ritual_period: null,
-    emotion_before: null, emotion_after: null, needs_checkin: false,
-    is_chore: false, energy_cost: null, description: null,
-    context: null, created_at: '2026-01-01T05:00:00Z', updated_at: '2026-01-01T05:00:00Z',
+  const makeItem = (dueDate: string | null, status: 'active' | 'completed' | 'archived' = 'active'): AtomItem => ({
+    id: '1', user_id: 'u', title: 't', type: 'task',
+    module: null, tags: [], status, state: 'inbox',
+    genesis_stage: 1, project_id: null, naming_convention: null,
+    notes: null, body: dueDate ? { operations: { due_date: dueDate, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null } } : {},
+    source: 'mindroot', created_at: '2026-01-01T05:00:00Z', updated_at: '2026-01-01T05:00:00Z',
+    created_by: null,
   });
 
   it('counts items with past due_date', () => {
@@ -151,8 +151,8 @@ describe('notificationService.countOverdueItems', () => {
 
   it('excludes completed and archived items', () => {
     const items = [
-      makeItem('2020-01-01', true),
-      makeItem('2020-01-01', false, true),
+      makeItem('2020-01-01', 'completed'),
+      makeItem('2020-01-01', 'archived'),
     ];
     expect(notificationService.countOverdueItems(items)).toBe(0);
   });

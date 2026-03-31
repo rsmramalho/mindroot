@@ -2,9 +2,24 @@
 // Check-in triggers, contextual prompts, emotional shift detection
 // Fase 2: expanded triggers (chore, emotion_before, ritual)
 
-import type { AtomItem, Emotion } from '@/types/item';
+import type { AtomItem, Emotion, SoulExtension } from '@/types/item';
 import type { CheckInTrigger } from '@/types/engine';
 import { POSITIVE_EMOTIONS, CHALLENGING_EMOTIONS } from '@/types/item';
+
+// ─── Helpers ────────────────────────────────────────────────
+
+function getEmotionBefore(item: AtomItem): Emotion | null {
+  const val = (item.body?.soul as SoulExtension | undefined)?.emotion_before;
+  return (val as Emotion) ?? null;
+}
+
+function getNeedsCheckin(item: AtomItem): boolean {
+  return (item.body?.soul as SoulExtension | undefined)?.needs_checkin ?? false;
+}
+
+function isChore(item: AtomItem): boolean {
+  return item.tags?.includes('chore') || item.tags?.includes('#chore') || false;
+}
 
 // ─── Check-in trigger logic ─────────────────────────────────
 // Triggers quando:
@@ -14,34 +29,37 @@ import { POSITIVE_EMOTIONS, CHALLENGING_EMOTIONS } from '@/types/item';
 // 4. type === 'ritual'
 
 export function shouldTriggerCheckIn(item: AtomItem): CheckInTrigger | null {
-  if (!item.completed) return null;
+  if (item.status !== 'completed') return null;
+
+  const emotionBefore = getEmotionBefore(item);
+  const itemIsChore = isChore(item);
 
   // Rule 1: explicit needs_checkin
-  if (item.needs_checkin) {
+  if (getNeedsCheckin(item)) {
     return {
       item_id: item.id,
-      reason: item.is_chore ? 'chore_complete' : 'task_complete',
-      emotion_before: item.emotion_before,
+      reason: itemIsChore ? 'chore_complete' : 'task_complete',
+      emotion_before: emotionBefore,
       prompt: generatePrompt(item),
     };
   }
 
   // Rule 2: chores always get recognized
-  if (item.is_chore) {
+  if (itemIsChore) {
     return {
       item_id: item.id,
       reason: 'chore_complete',
-      emotion_before: item.emotion_before,
+      emotion_before: emotionBefore,
       prompt: generatePrompt(item),
     };
   }
 
   // Rule 3: has emotion_before — check for shift
-  if (item.emotion_before) {
+  if (emotionBefore) {
     return {
       item_id: item.id,
       reason: 'task_complete',
-      emotion_before: item.emotion_before,
+      emotion_before: emotionBefore,
       prompt: generatePrompt(item),
     };
   }
@@ -62,26 +80,28 @@ export function shouldTriggerCheckIn(item: AtomItem): CheckInTrigger | null {
 // ─── Contextual prompt generation ───────────────────────────
 
 function generatePrompt(item: AtomItem): string {
-  const { emotion_before, is_chore, type } = item;
+  const emotionBefore = getEmotionBefore(item);
+  const itemIsChore = isChore(item);
+  const { type } = item;
 
   // Chore complete
-  if (is_chore) {
+  if (itemIsChore) {
     return 'Trabalho invisível reconhecido. Como você se sente depois?';
   }
 
   // Had challenging emotion before
-  if (emotion_before && CHALLENGING_EMOTIONS.includes(emotion_before)) {
-    return `Você estava ${emotion_before} antes. Como se sente agora?`;
+  if (emotionBefore && CHALLENGING_EMOTIONS.includes(emotionBefore)) {
+    return `Você estava ${emotionBefore} antes. Como se sente agora?`;
   }
 
   // Had positive emotion before
-  if (emotion_before && POSITIVE_EMOTIONS.includes(emotion_before)) {
-    return `Começou ${emotion_before}. Algo mudou?`;
+  if (emotionBefore && POSITIVE_EMOTIONS.includes(emotionBefore)) {
+    return `Começou ${emotionBefore}. Algo mudou?`;
   }
 
   // Had neutral emotion
-  if (emotion_before) {
-    return `Estava ${emotion_before}. E agora?`;
+  if (emotionBefore) {
+    return `Estava ${emotionBefore}. E agora?`;
   }
 
   // Ritual

@@ -5,7 +5,6 @@ import {
   POSITIVE_EMOTIONS,
   CHALLENGING_EMOTIONS,
   MODULES,
-  PRIORITIES,
 } from './item';
 
 describe('Emotion constants', () => {
@@ -37,8 +36,8 @@ describe('Emotion constants', () => {
 });
 
 describe('Module constants', () => {
-  it('MODULES has 6 entries', () => {
-    expect(MODULES).toHaveLength(6);
+  it('MODULES has 8 entries', () => {
+    expect(MODULES).toHaveLength(8);
   });
 
   it('all modules have key, label, color', () => {
@@ -52,24 +51,5 @@ describe('Module constants', () => {
   it('module keys are unique', () => {
     const keys = MODULES.map((m) => m.key);
     expect(new Set(keys).size).toBe(keys.length);
-  });
-});
-
-describe('Priority constants', () => {
-  it('PRIORITIES has 4 entries', () => {
-    expect(PRIORITIES).toHaveLength(4);
-  });
-
-  it('all priorities have key, label, color', () => {
-    for (const p of PRIORITIES) {
-      expect(p.key).toBeTruthy();
-      expect(p.label).toBeTruthy();
-      expect(p.color).toMatch(/^#[0-9a-f]{6}$/i);
-    }
-  });
-
-  it('priority order matches expectation', () => {
-    const keys = PRIORITIES.map((p) => p.key);
-    expect(keys).toEqual(['urgente', 'importante', 'manutencao', 'futuro']);
   });
 });

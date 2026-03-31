@@ -1,10 +1,10 @@
 // store/ritual-store.ts — Zustand ritual + period state
 import { create } from 'zustand';
-import type { RitualPeriod } from '@/types/item';
+import type { RitualSlot } from '@/types/item';
 import { getCurrentPeriod } from '@/types/ui';
 
 interface RitualState {
-  currentPeriod: RitualPeriod;
+  currentPeriod: RitualSlot;
   periodGreeting: string;
   periodColor: string;
   isCheckInOpen: boolean;

@@ -1,6 +1,6 @@
 // hooks/useProject.ts — Project-level derived data
 // Projects are AtomItems with type='project'.
-// Children reference parent_id to link tasks → project.
+// Children reference project_id to link tasks -> project.
 
 import { useMemo } from 'react';
 import { useItems } from '@/hooks/useItems';
@@ -19,7 +19,7 @@ export function useProject(projectId?: string | null) {
 
   // All projects
   const projects = useMemo(
-    () => items.filter((i) => i.type === 'project' && !i.archived),
+    () => items.filter((i) => i.type === 'project' && i.status !== 'archived'),
     [items]
   );
 
@@ -27,15 +27,15 @@ export function useProject(projectId?: string | null) {
   const projectsWithChildren = useMemo(() => {
     return projects.map((project): ProjectWithChildren => {
       const children = items.filter(
-        (i) => i.parent_id === project.id && !i.archived
+        (i) => i.project_id === project.id && i.status !== 'archived'
       );
       const totalTasks = children.filter(
-        (c) => c.type === 'task' || c.type === 'chore' || c.type === 'habit'
+        (c) => c.type === 'task' || c.tags.includes('chore') || c.type === 'habit'
       ).length;
       const completedTasks = children.filter(
         (c) =>
-          c.completed &&
-          (c.type === 'task' || c.type === 'chore' || c.type === 'habit')
+          c.status === 'completed' &&
+          (c.type === 'task' || c.tags.includes('chore') || c.type === 'habit')
       ).length;
       const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -53,14 +53,14 @@ export function useProject(projectId?: string | null) {
   const projectTasks = useMemo(() => {
     if (!currentProject) return [];
     return currentProject.children.filter(
-      (c) => c.type === 'task' || c.type === 'chore' || c.type === 'habit'
+      (c) => c.type === 'task' || c.tags.includes('chore') || c.type === 'habit'
     );
   }, [currentProject]);
 
   const projectNotes = useMemo(() => {
     if (!currentProject) return [];
     return currentProject.children.filter(
-      (c) => c.type === 'note' || c.type === 'reflection' || c.type === 'journal'
+      (c) => c.type === 'note' || c.type === 'reflection' || c.type === 'log'
     );
   }, [currentProject]);
 

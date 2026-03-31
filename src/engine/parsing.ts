@@ -2,17 +2,17 @@
 // Lógica pura, zero side effects, totalmente testável
 
 import type { ParsedInput, DetectedToken, TokenType } from '@/types/engine';
-import type { Emotion, ItemType, ItemModule, ItemPriority, RitualPeriod } from '@/types/item';
+import type { Emotion, AtomType, AtomModule, Priority, RitualSlot } from '@/types/item';
 import { addDays, nextMonday, format } from 'date-fns';
 
 // ─── Token patterns ─────────────────────────────────────────
 
 const TOKEN_PATTERNS: { regex: RegExp; type: TokenType; extract: (m: RegExpMatchArray) => string }[] = [
   // Módulos: #mod_work, #mod_family, etc.
-  { regex: /#mod_(purpose|work|family|body|mind|soul)\b/gi, type: 'module', extract: m => m[1].toLowerCase() },
+  { regex: /#mod_(purpose|work|family|body|mind|bridge|finance|social)\b/gi, type: 'module', extract: m => m[1].toLowerCase() },
 
-  // Prioridade: #prio_urgente, etc.
-  { regex: /#prio_(urgente|importante|manutencao|futuro)\b/gi, type: 'priority', extract: m => m[1].toLowerCase() },
+  // Prioridade: #prio_high, etc.
+  { regex: /#prio_(high|medium|low)\b/gi, type: 'priority', extract: m => m[1].toLowerCase() },
 
   // Emoção pré: #emo_calmo
   { regex: /#emo_(calmo|focado|grato|animado|confiante|ansioso|cansado|frustrado|triste|perdido|neutro)\b/gi, type: 'emotion_before', extract: m => m[1].toLowerCase() },
@@ -21,16 +21,16 @@ const TOKEN_PATTERNS: { regex: RegExp; type: TokenType; extract: (m: RegExpMatch
   { regex: /#emob_(calmo|focado|grato|animado|confiante|ansioso|cansado|frustrado|triste|perdido|neutro)\b/gi, type: 'emotion_after', extract: m => m[1].toLowerCase() },
 
   // Tipo explícito: #type_habit, #type_note, #type_project
-  { regex: /#type_(task|habit|ritual|chore|project|note|reflection|journal)\b/gi, type: 'type', extract: m => m[1].toLowerCase() },
+  { regex: /#type_(task|habit|ritual|project|note|reflection|review|doc|research|template|lib|recipe|workout|checkpoint|spec|log|wrap|list|resource|article|podcast|recommendation)\b/gi, type: 'type', extract: m => m[1].toLowerCase() },
 
-  // Chore
+  // Chore (tag-based in v2)
   { regex: /#chore\b/gi, type: 'chore', extract: () => 'true' },
 
   // Needs check-in
   { regex: /#needs_checkin\b/gi, type: 'needs_checkin', extract: () => 'true' },
 
-  // Energy cost: #energy_1 through #energy_5
-  { regex: /#energy_([1-5])\b/gi, type: 'energy', extract: m => m[1] },
+  // Energy level: #energy_high, #energy_medium, #energy_low
+  { regex: /#energy_(high|medium|low)\b/gi, type: 'energy', extract: m => m[1].toLowerCase() },
 
   // Temporal: @hoje, @amanha, @semana
   { regex: /@(hoje|amanha|amanhã|semana|ritual|checkin)\b/gi, type: 'temporal', extract: m => m[1].toLowerCase().replace('ã', 'a') },
@@ -83,11 +83,9 @@ export function parseInput(raw: string): ParsedInput {
 
   // Resolve type
   const is_chore = !!choreToken;
-  let type: ItemType = 'task'; // default
+  let type: AtomType = 'task'; // default
   if (typeToken) {
-    type = typeToken.value as ItemType;
-  } else if (is_chore) {
-    type = 'chore';
+    type = typeToken.value as AtomType;
   } else if (ritual_period) {
     type = 'ritual';
   }
@@ -106,16 +104,21 @@ export function parseInput(raw: string): ParsedInput {
     }
   }
 
+  // Add 'chore' tag if is_chore
+  if (is_chore && !allTags.includes('chore')) {
+    allTags.push('chore');
+  }
+
   return {
     title,
     type,
-    module: moduleToken ? (moduleToken.value as ItemModule) : null,
-    priority: priorityToken ? (priorityToken.value as ItemPriority) : null,
+    module: moduleToken ? (moduleToken.value as AtomModule) : null,
+    priority: priorityToken ? (priorityToken.value as Priority) : null,
     emotion_before: emotionBeforeToken ? (emotionBeforeToken.value as Emotion) : null,
     emotion_after: emotionAfterToken ? (emotionAfterToken.value as Emotion) : null,
     needs_checkin,
     is_chore,
-    energy_cost: energyToken ? parseInt(energyToken.value, 10) : null,
+    energy_cost: energyToken ? (['high', 'medium', 'low'].indexOf(energyToken.value) + 1) || null : null,
     due_date,
     due_time,
     ritual_period,
@@ -130,11 +133,11 @@ export function parseInput(raw: string): ParsedInput {
 function resolveTemporal(tokens: DetectedToken[]): {
   due_date: string | null;
   due_time: string | null;
-  ritual_period: RitualPeriod | null;
+  ritual_period: RitualSlot | null;
 } {
   let due_date: string | null = null;
   let due_time: string | null = null;
-  let ritual_period: RitualPeriod | null = null;
+  let ritual_period: RitualSlot | null = null;
   const today = new Date();
 
   for (const token of tokens) {

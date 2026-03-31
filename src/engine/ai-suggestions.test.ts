@@ -11,6 +11,27 @@ import type { AiSuggestion } from './ai-suggestions';
 
 beforeEach(() => resetIds());
 
+// Helper: set body.operations.due_date
+function withDueDate(dueDate: string) {
+  return { body: { operations: { due_date: dueDate, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null } } };
+}
+
+// Helper: set body.soul.energy_level
+function withEnergy(level: 'high' | 'medium' | 'low') {
+  return { body: { soul: { energy_level: level, emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null } } };
+}
+
+// Helper: set body.soul.emotion_after + body.operations.deadline (for positive streak)
+function withEmotionAfterAndDeadline(emotionAfter: string, deadline: string) {
+  return {
+    status: 'completed' as const,
+    body: {
+      soul: { emotion_after: emotionAfter, emotion_before: null, energy_level: null, needs_checkin: false, ritual_slot: null },
+      operations: { deadline, due_date: null, priority: null, project_status: null, progress_mode: null, progress: null },
+    },
+  };
+}
+
 // Helper: create item with created_at at specific hour
 function itemAt(hour: number, day = 0, overrides = {}) {
   const d = subDays(new Date(), day);
@@ -18,14 +39,14 @@ function itemAt(hour: number, day = 0, overrides = {}) {
   return mockItem({ created_at: d.toISOString(), ...overrides });
 }
 
-// Helper: create completed item with completed_at at specific hour
+// Helper: create completed item with deadline at specific hour
 function completedAt(hour: number, day = 0, overrides = {}) {
   const d = subDays(new Date(), day);
   d.setHours(hour, 0, 0, 0);
   return mockItem({
-    completed: true,
-    completed_at: d.toISOString(),
+    status: 'completed',
     created_at: d.toISOString(),
+    body: { operations: { deadline: d.toISOString(), due_date: null, priority: null, project_status: null, progress_mode: null, progress: null } },
     ...overrides,
   });
 }
@@ -43,25 +64,32 @@ describe('generateAiSuggestions', () => {
     const items: ReturnType<typeof mockItem>[] = [];
 
     // Overdue cluster (triggers overdue suggestion)
+    const pastDate = format(subDays(new Date(), 3), 'yyyy-MM-dd');
     for (let i = 0; i < 6; i++) {
       items.push(
         mockItem({
-          due_date: format(subDays(new Date(), 3), 'yyyy-MM-dd'),
           module: 'work',
-          completed: false,
+          status: 'active',
+          ...withDueDate(pastDate),
         })
       );
     }
 
     // High energy today (triggers energy overload)
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
     for (let i = 0; i < 4; i++) {
-      items.push(mockItem({ due_date: today, energy_cost: 5, completed: false }));
+      items.push(mockItem({
+        status: 'active',
+        body: {
+          operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null },
+          soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null },
+        },
+      }));
     }
 
     // Module imbalance (many work items)
     for (let i = 0; i < 8; i++) {
-      items.push(mockItem({ module: 'work', completed: false }));
+      items.push(mockItem({ module: 'work', status: 'active' }));
     }
 
     const result = generateAiSuggestions(items);
@@ -70,22 +98,29 @@ describe('generateAiSuggestions', () => {
 
   it('sorts by priority ascending', () => {
     const items: ReturnType<typeof mockItem>[] = [];
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
 
     // Overdue cluster (priority 2)
+    const pastDate = format(subDays(new Date(), 3), 'yyyy-MM-dd');
     for (let i = 0; i < 5; i++) {
       items.push(
         mockItem({
-          due_date: format(subDays(new Date(), 3), 'yyyy-MM-dd'),
           module: 'work',
-          completed: false,
+          status: 'active',
+          ...withDueDate(pastDate),
         })
       );
     }
 
     // Energy overload (priority 1)
     for (let i = 0; i < 4; i++) {
-      items.push(mockItem({ due_date: today, energy_cost: 5, completed: false }));
+      items.push(mockItem({
+        status: 'active',
+        body: {
+          operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null },
+          soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null },
+        },
+      }));
     }
 
     // Extra recent items to pass minimum threshold
@@ -101,10 +136,10 @@ describe('generateAiSuggestions', () => {
 
   it('ignores archived items', () => {
     const items = [
-      mockItem({ archived: true }),
-      mockItem({ archived: true }),
-      mockItem({ archived: true }),
-      mockItem({ archived: true }),
+      mockItem({ status: 'archived' }),
+      mockItem({ status: 'archived' }),
+      mockItem({ status: 'archived' }),
+      mockItem({ status: 'archived' }),
     ];
     expect(generateAiSuggestions(items)).toEqual([]);
   });
@@ -116,9 +151,9 @@ describe('overdue cluster detection', () => {
   it('detects overdue cluster in a module', () => {
     const pastDate = format(subDays(new Date(), 3), 'yyyy-MM-dd');
     const items = [
-      mockItem({ due_date: pastDate, module: 'work', completed: false }),
-      mockItem({ due_date: pastDate, module: 'work', completed: false }),
-      mockItem({ due_date: pastDate, module: 'work', completed: false }),
+      mockItem({ module: 'work', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({ module: 'work', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({ module: 'work', status: 'active', ...withDueDate(pastDate) }),
       // Need 3+ recent items total
       mockItem(),
     ];
@@ -132,11 +167,11 @@ describe('overdue cluster detection', () => {
   it('detects many overdue items without module cluster', () => {
     const pastDate = format(subDays(new Date(), 3), 'yyyy-MM-dd');
     const items = [
-      mockItem({ due_date: pastDate, module: 'work', completed: false }),
-      mockItem({ due_date: pastDate, module: 'body', completed: false }),
-      mockItem({ due_date: pastDate, module: 'mind', completed: false }),
-      mockItem({ due_date: pastDate, module: 'soul', completed: false }),
-      mockItem({ due_date: pastDate, module: 'family', completed: false }),
+      mockItem({ module: 'work', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({ module: 'body', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({ module: 'mind', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({ module: 'purpose', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({ module: 'family', status: 'active', ...withDueDate(pastDate) }),
     ];
     const result = generateAiSuggestions(items);
     const overdue = result.find((s) => s.id === 'overdue-many');
@@ -147,9 +182,9 @@ describe('overdue cluster detection', () => {
   it('ignores completed overdue items', () => {
     const pastDate = format(subDays(new Date(), 3), 'yyyy-MM-dd');
     const items = [
-      mockItem({ due_date: pastDate, module: 'work', completed: true }),
-      mockItem({ due_date: pastDate, module: 'work', completed: true }),
-      mockItem({ due_date: pastDate, module: 'work', completed: true }),
+      mockItem({ module: 'work', status: 'completed', ...withDueDate(pastDate) }),
+      mockItem({ module: 'work', status: 'completed', ...withDueDate(pastDate) }),
+      mockItem({ module: 'work', status: 'completed', ...withDueDate(pastDate) }),
       mockItem(),
       mockItem(),
       mockItem(),
@@ -164,12 +199,29 @@ describe('overdue cluster detection', () => {
 
 describe('energy overload detection', () => {
   it('detects 3+ high-energy items due today', () => {
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
     const items = [
-      mockItem({ due_date: today, energy_cost: 4, completed: false }),
-      mockItem({ due_date: today, energy_cost: 5, completed: false }),
-      mockItem({ due_date: today, energy_cost: 4, completed: false }),
-      // Need 3+ recent items
+      mockItem({
+        status: 'active',
+        body: {
+          operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null },
+          soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null },
+        },
+      }),
+      mockItem({
+        status: 'active',
+        body: {
+          operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null },
+          soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null },
+        },
+      }),
+      mockItem({
+        status: 'active',
+        body: {
+          operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null },
+          soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null },
+        },
+      }),
     ];
     const result = generateAiSuggestions(items);
     const energy = result.find((s) => s.id === 'energy-overload');
@@ -179,11 +231,11 @@ describe('energy overload detection', () => {
   });
 
   it('ignores low-energy items', () => {
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
     const items = [
-      mockItem({ due_date: today, energy_cost: 2, completed: false }),
-      mockItem({ due_date: today, energy_cost: 3, completed: false }),
-      mockItem({ due_date: today, energy_cost: 1, completed: false }),
+      mockItem({ status: 'active', body: { operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null }, soul: { energy_level: 'low', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null } } }),
+      mockItem({ status: 'active', body: { operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null }, soul: { energy_level: 'medium', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null } } }),
+      mockItem({ status: 'active', body: { operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null }, soul: { energy_level: 'low', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null } } }),
     ];
     const result = generateAiSuggestions(items);
     const energy = result.find((s) => s.id === 'energy-overload');
@@ -191,11 +243,11 @@ describe('energy overload detection', () => {
   });
 
   it('ignores completed high-energy items', () => {
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
     const items = [
-      mockItem({ due_date: today, energy_cost: 5, completed: true }),
-      mockItem({ due_date: today, energy_cost: 5, completed: true }),
-      mockItem({ due_date: today, energy_cost: 5, completed: true }),
+      mockItem({ status: 'completed', body: { operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null }, soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null } } }),
+      mockItem({ status: 'completed', body: { operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null }, soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null } } }),
+      mockItem({ status: 'completed', body: { operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null }, soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null } } }),
     ];
     const result = generateAiSuggestions(items);
     const energy = result.find((s) => s.id === 'energy-overload');
@@ -208,11 +260,11 @@ describe('energy overload detection', () => {
 describe('positive streak detection', () => {
   it('detects streak of positive emotions', () => {
     const items = [
-      completedAt(10, 0, { emotion_after: 'calmo' }),
-      completedAt(9, 0, { emotion_after: 'focado' }),
-      completedAt(8, 1, { emotion_after: 'grato' }),
-      completedAt(14, 1, { emotion_after: 'animado' }),
-      completedAt(16, 2, { emotion_after: 'confiante' }),
+      completedAt(10, 0, withEmotionAfterAndDeadline('calmo', new Date(new Date().setHours(10, 0, 0, 0)).toISOString())),
+      completedAt(9, 0, withEmotionAfterAndDeadline('focado', new Date(new Date().setHours(9, 0, 0, 0)).toISOString())),
+      completedAt(8, 1, withEmotionAfterAndDeadline('grato', subDays(new Date(), 1).toISOString())),
+      completedAt(14, 1, withEmotionAfterAndDeadline('animado', subDays(new Date(), 1).toISOString())),
+      completedAt(16, 2, withEmotionAfterAndDeadline('confiante', subDays(new Date(), 2).toISOString())),
     ];
     const result = generateAiSuggestions(items);
     const streak = result.find((s) => s.id === 'positive-streak');
@@ -223,9 +275,9 @@ describe('positive streak detection', () => {
 
   it('does not trigger with mixed emotions', () => {
     const items = [
-      completedAt(10, 0, { emotion_after: 'calmo' }),
-      completedAt(9, 0, { emotion_after: 'ansioso' }),
-      completedAt(8, 1, { emotion_after: 'focado' }),
+      completedAt(10, 0, withEmotionAfterAndDeadline('calmo', new Date().toISOString())),
+      completedAt(9, 0, withEmotionAfterAndDeadline('ansioso', new Date().toISOString())),
+      completedAt(8, 1, withEmotionAfterAndDeadline('focado', subDays(new Date(), 1).toISOString())),
     ];
     const result = generateAiSuggestions(items);
     const streak = result.find((s) => s.id === 'positive-streak');
@@ -234,8 +286,8 @@ describe('positive streak detection', () => {
 
   it('needs at least 3 completed items', () => {
     const items = [
-      completedAt(10, 0, { emotion_after: 'calmo' }),
-      completedAt(9, 0, { emotion_after: 'focado' }),
+      completedAt(10, 0, withEmotionAfterAndDeadline('calmo', new Date().toISOString())),
+      completedAt(9, 0, withEmotionAfterAndDeadline('focado', new Date().toISOString())),
     ];
     const result = generateAiSuggestions(items);
     const streak = result.find((s) => s.id === 'positive-streak');
@@ -281,24 +333,20 @@ describe('module imbalance detection', () => {
 
 describe('procrastination detection', () => {
   it('detects low completion rate in current period', () => {
-    // We need to create items at the current period hour
     const now = new Date();
     const hour = now.getHours();
 
-    // Create enough items in current period with low completion
     const items: ReturnType<typeof mockItem>[] = [];
     for (let i = 0; i < 5; i++) {
-      items.push(itemAt(hour, i, { module: 'work', completed: false }));
+      items.push(itemAt(hour, i, { module: 'work', status: 'active' }));
     }
-    // Create items in a different period with high completion
-    const otherHour = hour < 12 ? 15 : 9; // use opposite period
+    const otherHour = hour < 12 ? 15 : 9;
     for (let i = 0; i < 3; i++) {
-      items.push(itemAt(otherHour, i, { module: 'work', completed: true }));
+      items.push(itemAt(otherHour, i, { module: 'work', status: 'completed' }));
     }
 
     const result = generateAiSuggestions(items);
     const proc = result.find((s) => s.id === 'procrastination-work');
-    // May or may not trigger depending on exact timing, but should not error
     expect(result).toBeInstanceOf(Array);
   });
 });
@@ -332,14 +380,32 @@ describe('action metadata', () => {
 describe('suggestion shape', () => {
   it('all suggestions have required fields', () => {
     const pastDate = format(subDays(new Date(), 3), 'yyyy-MM-dd');
-    const today = format(new Date(), 'yyyy-MM-dd');
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
     const items = [
-      mockItem({ due_date: pastDate, module: 'work', completed: false }),
-      mockItem({ due_date: pastDate, module: 'work', completed: false }),
-      mockItem({ due_date: pastDate, module: 'work', completed: false }),
-      mockItem({ due_date: today, energy_cost: 5, completed: false }),
-      mockItem({ due_date: today, energy_cost: 4, completed: false }),
-      mockItem({ due_date: today, energy_cost: 5, completed: false }),
+      mockItem({ module: 'work', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({ module: 'work', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({ module: 'work', status: 'active', ...withDueDate(pastDate) }),
+      mockItem({
+        status: 'active',
+        body: {
+          operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null },
+          soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null },
+        },
+      }),
+      mockItem({
+        status: 'active',
+        body: {
+          operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null },
+          soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null },
+        },
+      }),
+      mockItem({
+        status: 'active',
+        body: {
+          operations: { due_date: todayStr, priority: null, deadline: null, project_status: null, progress_mode: null, progress: null },
+          soul: { energy_level: 'high', emotion_before: null, emotion_after: null, needs_checkin: false, ritual_slot: null },
+        },
+      }),
     ];
     const result = generateAiSuggestions(items);
     for (const s of result) {

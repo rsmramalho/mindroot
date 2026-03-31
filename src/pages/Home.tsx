@@ -63,7 +63,7 @@ export function HomePage() {
   };
 
   const handleArchive = (id: string) => {
-    updateMutation.mutate({ id, updates: { archived: true } });
+    updateMutation.mutate({ id, updates: { status: 'archived' as const } });
   };
 
   const handleEdit = (id: string, updates: Partial<AtomItem>) => {

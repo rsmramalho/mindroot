@@ -18,16 +18,16 @@ export default function SoulPulse({ items, maxDots = 7 }: SoulPulseProps) {
     const emotions: { emotion: Emotion; timestamp: string; source: 'before' | 'after' }[] = [];
 
     for (const item of items) {
-      if (item.emotion_after) {
+      if (item.body.soul?.emotion_after) {
         emotions.push({
-          emotion: item.emotion_after,
+          emotion: item.body.soul.emotion_after as Emotion,
           timestamp: item.updated_at,
           source: 'after',
         });
       }
-      if (item.emotion_before) {
+      if (item.body.soul?.emotion_before) {
         emotions.push({
-          emotion: item.emotion_before,
+          emotion: item.body.soul.emotion_before as Emotion,
           timestamp: item.created_at,
           source: 'before',
         });

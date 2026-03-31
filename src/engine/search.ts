@@ -1,7 +1,7 @@
 // engine/search.ts — Advanced search & filter engine (pure logic)
 // Parses search queries with filter prefixes and applies them to items
 
-import type { AtomItem, ItemModule, Emotion, RitualPeriod, ItemPriority, ItemType } from '@/types/item';
+import type { AtomItem, AtomModule, Emotion, RitualSlot, Priority, AtomType, SoulExtension, OperationsExtension } from '@/types/item';
 import { MODULES, EMOTIONS } from '@/types/item';
 import { RITUAL_PERIODS } from '@/types/ui';
 import { isToday, isThisWeek, isPast, isFuture, startOfDay, parseISO } from 'date-fns';
@@ -10,11 +10,11 @@ import { isToday, isThisWeek, isPast, isFuture, startOfDay, parseISO } from 'dat
 
 export interface SearchFilters {
   text: string;
-  module: ItemModule | null;
+  module: AtomModule | null;
   emotion: Emotion | null;
-  period: RitualPeriod | null;
-  priority: ItemPriority | null;
-  type: ItemType | null;
+  period: RitualSlot | null;
+  priority: Priority | null;
+  type: AtomType | null;
   tag: string | null;
   dateRange: 'hoje' | 'semana' | 'atrasado' | 'futuro' | null;
   completed: boolean | null; // null = don't filter
@@ -23,7 +23,7 @@ export interface SearchFilters {
 export interface SearchResult {
   item: AtomItem;
   score: number; // relevance score (higher = better match)
-  matchField: 'title' | 'description' | 'tag' | 'module' | 'emotion';
+  matchField: 'title' | 'notes' | 'tag' | 'module' | 'emotion';
 }
 
 export const EMPTY_FILTERS: SearchFilters = {
@@ -41,7 +41,7 @@ export const EMPTY_FILTERS: SearchFilters = {
 // ━━━ Filter prefix definitions ━━━
 
 const MODULE_KEYS = MODULES.map((m) => m.key);
-const MODULE_LABELS_MAP: Record<string, ItemModule> = {};
+const MODULE_LABELS_MAP: Record<string, AtomModule> = {};
 for (const m of MODULES) {
   MODULE_LABELS_MAP[normalize(m.label)] = m.key;
   MODULE_LABELS_MAP[normalize(m.key)] = m.key;
@@ -52,34 +52,38 @@ for (const e of EMOTIONS) {
   EMOTION_MAP[normalize(e)] = e;
 }
 
-const PERIOD_MAP: Record<string, RitualPeriod> = {};
+const PERIOD_MAP: Record<string, RitualSlot> = {};
 for (const p of RITUAL_PERIODS) {
-  PERIOD_MAP[normalize(p.key)] = p.key;
-  PERIOD_MAP[normalize(p.label)] = p.key;
+  PERIOD_MAP[normalize(p.key)] = p.key as RitualSlot;
+  PERIOD_MAP[normalize(p.label)] = p.key as RitualSlot;
 }
 
-const PRIORITY_MAP: Record<string, ItemPriority> = {
-  urgente: 'urgente',
-  importante: 'importante',
-  manutencao: 'manutencao',
-  futuro: 'futuro',
+const PRIORITY_MAP: Record<string, Priority> = {
+  high: 'high',
+  alta: 'high',
+  medium: 'medium',
+  media: 'medium',
+  low: 'low',
+  baixa: 'low',
 };
 
-const TYPE_MAP: Record<string, ItemType> = {
+const TYPE_MAP: Record<string, AtomType> = {
   task: 'task',
   tarefa: 'task',
   habit: 'habit',
   habito: 'habit',
   ritual: 'ritual',
-  chore: 'chore',
   project: 'project',
   projeto: 'project',
   note: 'note',
   nota: 'note',
   reflection: 'reflection',
   reflexao: 'reflection',
-  journal: 'journal',
-  diario: 'journal',
+  review: 'review',
+  doc: 'doc',
+  research: 'research',
+  template: 'template',
+  lib: 'lib',
 };
 
 const DATE_MAP: Record<string, SearchFilters['dateRange']> = {
@@ -93,6 +97,28 @@ const DATE_MAP: Record<string, SearchFilters['dateRange']> = {
   future: 'futuro',
 };
 
+// ━━━ Helpers ━━━
+
+function getEmotionBefore(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.emotion_before ?? null;
+}
+
+function getEmotionAfter(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.emotion_after ?? null;
+}
+
+function getRitualSlot(item: AtomItem): RitualSlot | null {
+  return (item.body?.soul as SoulExtension | undefined)?.ritual_slot ?? null;
+}
+
+function getPriority(item: AtomItem): Priority | null {
+  return (item.body?.operations as OperationsExtension | undefined)?.priority ?? null;
+}
+
+function getDueDate(item: AtomItem): string | null {
+  return (item.body?.operations as OperationsExtension | undefined)?.due_date ?? null;
+}
+
 // ━━━ Core functions ━━━
 
 /** Normalize string for accent-insensitive matching */
@@ -103,7 +129,7 @@ export function normalize(s: string): string {
 /**
  * Parse a search query string into structured filters.
  * Supports prefixes:
- *   mod:work  emo:calmo  per:aurora  prio:urgente  tipo:task  tag:frontend  data:hoje
+ *   mod:work  emo:calmo  per:aurora  prio:high  tipo:task  tag:frontend  data:hoje
  * Remaining text becomes the free-text search.
  */
 export function parseSearchQuery(raw: string): SearchFilters {
@@ -166,25 +192,25 @@ export function searchItems(items: AtomItem[], filters: SearchFilters): SearchRe
 
   for (const item of items) {
     // Skip archived by default
-    if (item.archived) continue;
+    if (item.status === 'archived') continue;
 
     // Completed filter
-    if (filters.completed === false && item.completed) continue;
-    if (filters.completed === true && !item.completed) continue;
+    if (filters.completed === false && item.status === 'completed') continue;
+    if (filters.completed === true && item.status !== 'completed') continue;
 
     // Module filter
     if (filters.module && item.module !== filters.module) continue;
 
     // Emotion filter (matches either before or after)
     if (filters.emotion) {
-      if (item.emotion_before !== filters.emotion && item.emotion_after !== filters.emotion) continue;
+      if (getEmotionBefore(item) !== filters.emotion && getEmotionAfter(item) !== filters.emotion) continue;
     }
 
     // Period filter
-    if (filters.period && item.ritual_period !== filters.period) continue;
+    if (filters.period && getRitualSlot(item) !== filters.period) continue;
 
     // Priority filter
-    if (filters.priority && item.priority !== filters.priority) continue;
+    if (filters.priority && getPriority(item) !== filters.priority) continue;
 
     // Type filter
     if (filters.type && item.type !== filters.type) continue;
@@ -198,7 +224,8 @@ export function searchItems(items: AtomItem[], filters: SearchFilters): SearchRe
 
     // Date range filter
     if (filters.dateRange) {
-      const due = item.due_date ? new Date(item.due_date) : null;
+      const dueDate = getDueDate(item);
+      const due = dueDate ? new Date(dueDate) : null;
       switch (filters.dateRange) {
         case 'hoje':
           if (!due || !isToday(due)) continue;
@@ -215,10 +242,10 @@ export function searchItems(items: AtomItem[], filters: SearchFilters): SearchRe
       }
     }
 
-    // Text search (title + description + tags)
+    // Text search (title + notes + tags)
     if (q) {
       const titleNorm = normalize(item.title);
-      const descNorm = item.description ? normalize(item.description) : '';
+      const notesNorm = item.notes ? normalize(item.notes) : '';
       const tagsNorm = item.tags?.map(normalize).join(' ') || '';
 
       let score = 0;
@@ -229,9 +256,9 @@ export function searchItems(items: AtomItem[], filters: SearchFilters): SearchRe
         score = 100;
       } else if (titleNorm.includes(q)) {
         score = 80;
-      } else if (descNorm.includes(q)) {
+      } else if (notesNorm.includes(q)) {
         score = 50;
-        matchField = 'description';
+        matchField = 'notes';
       } else if (tagsNorm.includes(q)) {
         score = 40;
         matchField = 'tag';
@@ -288,7 +315,7 @@ export function getFilterLabels(filters: SearchFilters): { key: string; label: s
     if (p) labels.push({ key: 'period', label: p.label, color: p.color });
   }
   if (filters.priority) {
-    const pl: Record<string, string> = { urgente: 'Urgente', importante: 'Importante', manutencao: 'Manutencao', futuro: 'Futuro' };
+    const pl: Record<string, string> = { high: 'Alta', medium: 'Media', low: 'Baixa' };
     labels.push({ key: 'priority', label: pl[filters.priority] || filters.priority, color: '#a89478' });
   }
   if (filters.type) {

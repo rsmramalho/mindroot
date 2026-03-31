@@ -3,18 +3,18 @@
 
 import { supabase } from './supabase';
 import type { ParsedInput } from '@/types/engine';
-import type { ItemType, ItemModule, ItemPriority, Emotion, RitualPeriod } from '@/types/item';
+import type { AtomType, AtomModule, Priority, Emotion, RitualSlot } from '@/types/item';
 
 export interface AIParsedResult {
   title: string;
-  type: ItemType;
-  module: ItemModule | null;
-  priority: ItemPriority | null;
+  type: AtomType;
+  module: AtomModule | null;
+  priority: Priority | null;
   emotion_before: Emotion | null;
   is_chore: boolean;
   due_date: string | null;
   due_time: string | null;
-  ritual_period: RitualPeriod | null;
+  ritual_period: RitualSlot | null;
   tags: string[];
 }
 

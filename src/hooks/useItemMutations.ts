@@ -1,5 +1,5 @@
 // hooks/useItemMutations.ts
-// createItem: aceita CreateItemPayload (compatível com AtomInput)
+// createItem: aceita CreateItemPayload (compativel com AtomInput)
 // updateMutation/completeMutation/etc: usados por Dashboard/Inbox
 // alpha.10: toast notifications on success/error, undo on delete/archive
 
@@ -44,16 +44,16 @@ export function useItemMutations() {
       toast.error('Erro ao atualizar item');
     },
     onSuccess: (_data, { updates }, context) => {
-      if (updates.archived === true && context?.previous) {
+      if (updates.status === 'archived' && context?.previous) {
         const previousItems = context.previous;
         toast.success('Item arquivado', {
           undoAction: () => {
             queryClient.setQueryData(['items'], previousItems);
             const id = _data?.id;
-            if (id) itemService.update(id, { archived: false });
+            if (id) itemService.update(id, { status: 'active' });
           },
         });
-      } else if (updates.archived !== true) {
+      } else if (updates.status !== 'archived') {
         toast.success('Item atualizado');
       }
     },
@@ -61,13 +61,13 @@ export function useItemMutations() {
   });
 
   const completeMutation = useMutation({
-    mutationFn: async (id: string) => itemService.complete(id),
+    mutationFn: async (id: string) => itemService.update(id, { status: 'completed' }),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['items'] });
       const previous = queryClient.getQueryData<AtomItem[]>(['items']);
       queryClient.setQueryData<AtomItem[]>(['items'], (old) =>
         old?.map((item) =>
-          item.id === id ? { ...item, completed: true, completed_at: new Date().toISOString() } : item
+          item.id === id ? { ...item, status: 'completed' as const } : item
         )
       );
       return { previous };
@@ -83,13 +83,13 @@ export function useItemMutations() {
   });
 
   const uncompleteMutation = useMutation({
-    mutationFn: async (id: string) => itemService.uncomplete(id),
+    mutationFn: async (id: string) => itemService.update(id, { status: 'active' }),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['items'] });
       const previous = queryClient.getQueryData<AtomItem[]>(['items']);
       queryClient.setQueryData<AtomItem[]>(['items'], (old) =>
         old?.map((item) =>
-          item.id === id ? { ...item, completed: false, completed_at: null } : item
+          item.id === id ? { ...item, status: 'active' as const } : item
         )
       );
       return { previous };

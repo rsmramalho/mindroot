@@ -1,7 +1,7 @@
 // hooks/useJournal.test.ts — Journal hook logic tests
 // Tests filtering, date grouping, stats calculation
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import type { AtomItem } from '@/types/item';
+import type { AtomItem, SoulExtension } from '@/types/item';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -12,29 +12,31 @@ function makeItem(overrides: Partial<AtomItem> = {}): AtomItem {
     id: crypto.randomUUID(),
     user_id: 'user-1',
     title: 'Test entry',
-    type: 'journal',
+    type: 'log',
     module: null,
-    priority: null,
     tags: [],
-    parent_id: null,
-    completed: false,
-    completed_at: null,
-    archived: false,
-    due_date: null,
-    due_time: null,
-    recurrence: null,
-    ritual_period: null,
-    emotion_before: null,
-    emotion_after: null,
-    needs_checkin: false,
-    is_chore: false,
-    energy_cost: null,
-    description: null,
-    context: null,
+    status: 'active',
+    state: 'inbox',
+    genesis_stage: 1,
+    project_id: null,
+    naming_convention: null,
+    notes: null,
+    body: {},
+    source: 'mindroot',
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    created_by: null,
     ...overrides,
   };
+}
+
+// Helper to get emotion from body.soul
+function getEmotionBefore(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.emotion_before ?? null;
+}
+
+function getEmotionAfter(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.emotion_after ?? null;
 }
 
 // ─── Pure logic extracted from useJournal ────────────────
@@ -43,7 +45,7 @@ function filterJournalItems(items: AtomItem[]): AtomItem[] {
   return items
     .filter(
       (i) =>
-        (i.type === 'reflection' || i.type === 'journal') && !i.archived
+        (i.type === 'reflection' || i.type === 'log') && i.status !== 'archived'
     )
     .sort(
       (a, b) =>
@@ -91,7 +93,7 @@ function calcStats(journalItems: AtomItem[]) {
   const total = journalItems.length;
   const today = format(new Date(), 'yyyy-MM-dd');
   const withEmotion = journalItems.filter(
-    (i) => i.emotion_before || i.emotion_after
+    (i) => getEmotionBefore(i) || getEmotionAfter(i)
   ).length;
   const todayCount = journalItems.filter(
     (i) => format(new Date(i.created_at), 'yyyy-MM-dd') === today
@@ -102,8 +104,8 @@ function calcStats(journalItems: AtomItem[]) {
 // ─── Tests: filterJournalItems ───────────────────────────
 
 describe('filterJournalItems', () => {
-  it('includes type: journal', () => {
-    const items = [makeItem({ type: 'journal' })];
+  it('includes type: log', () => {
+    const items = [makeItem({ type: 'log' })];
     expect(filterJournalItems(items)).toHaveLength(1);
   });
 
@@ -127,28 +129,28 @@ describe('filterJournalItems', () => {
     expect(filterJournalItems(items)).toHaveLength(0);
   });
 
-  it('excludes type: chore', () => {
-    const items = [makeItem({ type: 'chore' })];
+  it('excludes chore-tagged tasks', () => {
+    const items = [makeItem({ type: 'task', tags: ['chore'] })];
     expect(filterJournalItems(items)).toHaveLength(0);
   });
 
   it('excludes archived items', () => {
     const items = [
-      makeItem({ type: 'journal', archived: false }),
-      makeItem({ type: 'journal', archived: true }),
-      makeItem({ type: 'reflection', archived: true }),
+      makeItem({ type: 'log', status: 'active' }),
+      makeItem({ type: 'log', status: 'archived' }),
+      makeItem({ type: 'reflection', status: 'archived' }),
     ];
     expect(filterJournalItems(items)).toHaveLength(1);
   });
 
   it('sorts newest first', () => {
     const older = makeItem({
-      type: 'journal',
+      type: 'log',
       title: 'older',
       created_at: '2025-01-01T10:00:00Z',
     });
     const newer = makeItem({
-      type: 'journal',
+      type: 'log',
       title: 'newer',
       created_at: '2025-06-15T10:00:00Z',
     });
@@ -159,12 +161,12 @@ describe('filterJournalItems', () => {
 
   it('handles mixed types correctly', () => {
     const items = [
-      makeItem({ type: 'journal' }),
+      makeItem({ type: 'log' }),
       makeItem({ type: 'reflection' }),
       makeItem({ type: 'task' }),
       makeItem({ type: 'ritual' }),
       makeItem({ type: 'note' }),
-      makeItem({ type: 'journal', archived: true }),
+      makeItem({ type: 'log', status: 'archived' }),
     ];
     expect(filterJournalItems(items)).toHaveLength(2);
   });
@@ -175,30 +177,30 @@ describe('filterJournalItems', () => {
 describe('groupByDate', () => {
   it('groups items by date', () => {
     const items = [
-      makeItem({ type: 'journal', created_at: '2025-06-15T02:00:00Z' }),
-      makeItem({ type: 'journal', created_at: '2025-06-15T06:00:00Z' }),
-      makeItem({ type: 'journal', created_at: '2025-06-14T02:00:00Z' }),
+      makeItem({ type: 'log', created_at: '2025-06-15T02:00:00Z' }),
+      makeItem({ type: 'log', created_at: '2025-06-15T06:00:00Z' }),
+      makeItem({ type: 'log', created_at: '2025-06-14T02:00:00Z' }),
     ];
     const groups = groupByDate(items);
     expect(groups).toHaveLength(2);
   });
 
   it('labels today as "Hoje"', () => {
-    const items = [makeItem({ type: 'journal', created_at: new Date().toISOString() })];
+    const items = [makeItem({ type: 'log', created_at: new Date().toISOString() })];
     const groups = groupByDate(items);
     expect(groups[0].label).toBe('Hoje');
   });
 
   it('labels yesterday as "Ontem"', () => {
     const yesterday = subDays(new Date(), 1);
-    const items = [makeItem({ type: 'journal', created_at: yesterday.toISOString() })];
+    const items = [makeItem({ type: 'log', created_at: yesterday.toISOString() })];
     const groups = groupByDate(items);
     expect(groups[0].label).toBe('Ontem');
   });
 
   it('labels older dates with "d de MMMM" format', () => {
     const items = [
-      makeItem({ type: 'journal', created_at: '2025-01-10T10:00:00Z' }),
+      makeItem({ type: 'log', created_at: '2025-01-10T10:00:00Z' }),
     ];
     const groups = groupByDate(items);
     expect(groups[0].label).toBe('10 de janeiro');
@@ -210,8 +212,8 @@ describe('groupByDate', () => {
 
   it('multiple items on same day are in same group', () => {
     const items = [
-      makeItem({ type: 'journal', title: 'A', created_at: '2025-03-01T01:00:00Z' }),
-      makeItem({ type: 'journal', title: 'B', created_at: '2025-03-01T05:00:00Z' }),
+      makeItem({ type: 'log', title: 'A', created_at: '2025-03-01T01:00:00Z' }),
+      makeItem({ type: 'log', title: 'B', created_at: '2025-03-01T05:00:00Z' }),
     ];
     const groups = groupByDate(items);
     expect(groups).toHaveLength(1);
@@ -224,8 +226,8 @@ describe('groupByDate', () => {
 describe('calcStats', () => {
   it('counts total correctly', () => {
     const items = [
-      makeItem({ type: 'journal' }),
-      makeItem({ type: 'journal' }),
+      makeItem({ type: 'log' }),
+      makeItem({ type: 'log' }),
       makeItem({ type: 'reflection' }),
     ];
     expect(calcStats(items).total).toBe(3);
@@ -233,31 +235,31 @@ describe('calcStats', () => {
 
   it('counts today items', () => {
     const items = [
-      makeItem({ type: 'journal', created_at: new Date().toISOString() }),
-      makeItem({ type: 'journal', created_at: '2025-01-01T10:00:00Z' }),
+      makeItem({ type: 'log', created_at: new Date().toISOString() }),
+      makeItem({ type: 'log', created_at: '2025-01-01T10:00:00Z' }),
     ];
     expect(calcStats(items).todayCount).toBe(1);
   });
 
   it('counts items with emotion_before', () => {
     const items = [
-      makeItem({ type: 'journal', emotion_before: 'calmo' }),
-      makeItem({ type: 'journal' }),
+      makeItem({ type: 'log', body: { soul: { emotion_before: 'calmo', emotion_after: null, energy_level: null, needs_checkin: false, ritual_slot: null } } }),
+      makeItem({ type: 'log' }),
     ];
     expect(calcStats(items).withEmotion).toBe(1);
   });
 
   it('counts items with emotion_after', () => {
     const items = [
-      makeItem({ type: 'journal', emotion_after: 'grato' }),
-      makeItem({ type: 'journal' }),
+      makeItem({ type: 'log', body: { soul: { emotion_after: 'grato', emotion_before: null, energy_level: null, needs_checkin: false, ritual_slot: null } } }),
+      makeItem({ type: 'log' }),
     ];
     expect(calcStats(items).withEmotion).toBe(1);
   });
 
   it('counts item with both emotions only once', () => {
     const items = [
-      makeItem({ type: 'journal', emotion_before: 'ansioso', emotion_after: 'calmo' }),
+      makeItem({ type: 'log', body: { soul: { emotion_before: 'ansioso', emotion_after: 'calmo', energy_level: null, needs_checkin: false, ritual_slot: null } } }),
     ];
     expect(calcStats(items).withEmotion).toBe(1);
   });

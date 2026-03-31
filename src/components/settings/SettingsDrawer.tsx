@@ -14,7 +14,7 @@ import { exportJournalMarkdown, exportAllDataJson } from '@/engine/export';
 import { SECTION_LABELS, DEFAULT_MODULE_COLORS } from '@/engine/theme';
 import type { DashboardSection } from '@/engine/theme';
 import { MODULES } from '@/types/item';
-import type { ItemModule } from '@/types/item';
+import type { AtomModule } from '@/types/item';
 
 interface SettingsDrawerProps {
   open: boolean;
@@ -544,7 +544,7 @@ function ModuleColorRow({
   defaultColor,
   onChange,
 }: {
-  module: ItemModule;
+  module: AtomModule;
   label: string;
   color: string;
   defaultColor: string;

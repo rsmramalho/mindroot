@@ -1,7 +1,7 @@
 // engine/export.ts — Export & backup logic
 // Pure functions: items → markdown, items → JSON, auto-backup scheduling
 
-import type { AtomItem } from '@/types/item';
+import type { AtomItem, SoulExtension } from '@/types/item';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -34,7 +34,9 @@ const MODULE_LABELS: Record<string, string> = {
   family: 'Familia',
   body: 'Corpo',
   mind: 'Mente',
-  soul: 'Alma',
+  bridge: 'Ponte',
+  finance: 'Financas',
+  social: 'Social',
 };
 
 const EMOTION_LABELS: Record<string, string> = {
@@ -51,11 +53,21 @@ const EMOTION_LABELS: Record<string, string> = {
   neutro: 'neutro',
 };
 
+// ─── Helpers ────────────────────────────────────────────────
+
+function getEmotionBefore(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.emotion_before ?? null;
+}
+
+function getEmotionAfter(item: AtomItem): string | null {
+  return (item.body?.soul as SoulExtension | undefined)?.emotion_after ?? null;
+}
+
 // ─── Journal → Markdown ─────────────────────────────────────
 
 export function journalToMarkdown(items: AtomItem[]): string {
   const journalItems = items
-    .filter((i) => (i.type === 'journal' || i.type === 'reflection') && !i.archived)
+    .filter((i) => (i.type === 'log' || i.type === 'reflection') && i.status !== 'archived')
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   if (journalItems.length === 0) return '';
@@ -82,15 +94,17 @@ export function journalToMarkdown(items: AtomItem[]): string {
       lines.push(entry.title);
       lines.push('');
 
-      if (entry.description) {
-        lines.push(entry.description);
+      if (entry.notes) {
+        lines.push(entry.notes);
         lines.push('');
       }
 
       // Metadata
       const meta: string[] = [];
-      if (entry.emotion_before) meta.push(`antes: ${EMOTION_LABELS[entry.emotion_before] || entry.emotion_before}`);
-      if (entry.emotion_after) meta.push(`depois: ${EMOTION_LABELS[entry.emotion_after] || entry.emotion_after}`);
+      const emotionBefore = getEmotionBefore(entry);
+      const emotionAfter = getEmotionAfter(entry);
+      if (emotionBefore) meta.push(`antes: ${EMOTION_LABELS[emotionBefore] || emotionBefore}`);
+      if (emotionAfter) meta.push(`depois: ${EMOTION_LABELS[emotionAfter] || emotionAfter}`);
       if (entry.module) meta.push(`modulo: ${MODULE_LABELS[entry.module] || entry.module}`);
       if (entry.tags && entry.tags.length > 0) meta.push(`tags: ${entry.tags.join(', ')}`);
 
@@ -114,7 +128,7 @@ export function itemsToBackupJson(
 ): string {
   const filtered = options.includeArchived
     ? items
-    : items.filter((i) => !i.archived);
+    : items.filter((i) => i.status !== 'archived');
 
   const payload: BackupPayload = {
     meta: {

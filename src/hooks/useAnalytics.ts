@@ -1,7 +1,7 @@
 // hooks/useAnalytics.ts — Derived analytics from items
 import { useMemo } from 'react';
 import { useItems } from '@/hooks/useItems';
-import type { Emotion, ItemModule } from '@/types/item';
+import type { Emotion, AtomModule } from '@/types/item';
 import { POSITIVE_EMOTIONS } from '@/types/item';
 import {
   format,
@@ -28,10 +28,10 @@ export interface DailySnapshot {
 }
 
 export interface ModuleStats {
-  module: ItemModule;
+  module: AtomModule;
   total: number;
   completed: number;
-  avgEnergy: number | null;
+  avgEnergy: string | null;
 }
 
 export interface StreakData {
@@ -50,9 +50,9 @@ export function useAnalytics(days: number = 30) {
     () =>
       items.filter(
         (i) =>
-          i.completed &&
-          i.completed_at &&
-          isAfter(parseISO(i.completed_at), cutoff)
+          i.status === 'completed' &&
+          i.body.recurrence?.last_completed &&
+          isAfter(parseISO(i.body.recurrence.last_completed), cutoff)
       ),
     [items, cutoff]
   );
@@ -68,7 +68,7 @@ export function useAnalytics(days: number = 30) {
       const dateStr = format(day, 'yyyy-MM-dd');
 
       const completedToday = recentCompleted.filter(
-        (i) => i.completed_at && isSameDay(parseISO(i.completed_at), day)
+        (i) => i.body.recurrence?.last_completed && isSameDay(parseISO(i.body.recurrence.last_completed), day)
       );
 
       const createdToday = items.filter((i) =>
@@ -77,8 +77,8 @@ export function useAnalytics(days: number = 30) {
 
       const emotions: Emotion[] = [];
       for (const item of [...completedToday, ...createdToday]) {
-        if (item.emotion_before) emotions.push(item.emotion_before);
-        if (item.emotion_after) emotions.push(item.emotion_after);
+        if (item.body.soul?.emotion_before) emotions.push(item.body.soul.emotion_before as Emotion);
+        if (item.body.soul?.emotion_after) emotions.push(item.body.soul.emotion_after as Emotion);
       }
 
       const positiveCount = emotions.filter((e) =>
@@ -97,22 +97,30 @@ export function useAnalytics(days: number = 30) {
 
   // Module breakdown
   const moduleStats = useMemo((): ModuleStats[] => {
-    const modules: ItemModule[] = ['purpose', 'work', 'family', 'body', 'mind', 'soul'];
+    const modules: AtomModule[] = ['purpose', 'work', 'family', 'body', 'mind', 'bridge', 'finance', 'social'];
     return modules.map((mod) => {
-      const modItems = items.filter((i) => i.module === mod && !i.archived);
-      const completed = modItems.filter((i) => i.completed);
-      const energyCosts = modItems
-        .filter((i) => i.energy_cost !== null)
-        .map((i) => i.energy_cost!);
+      const modItems = items.filter((i) => i.module === mod && i.status !== 'archived');
+      const completed = modItems.filter((i) => i.status === 'completed');
+
+      // Collect energy levels and compute most common
+      const energyLevels = modItems
+        .filter((i) => i.body.soul?.energy_level != null)
+        .map((i) => i.body.soul!.energy_level!);
+
+      let avgEnergy: string | null = null;
+      if (energyLevels.length > 0) {
+        const counts: Record<string, number> = {};
+        for (const e of energyLevels) {
+          counts[e] = (counts[e] || 0) + 1;
+        }
+        avgEnergy = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+      }
 
       return {
         module: mod,
         total: modItems.length,
         completed: completed.length,
-        avgEnergy:
-          energyCosts.length > 0
-            ? Math.round((energyCosts.reduce((a, b) => a + b, 0) / energyCosts.length) * 10) / 10
-            : null,
+        avgEnergy,
       };
     });
   }, [items]);
@@ -129,7 +137,7 @@ export function useAnalytics(days: number = 30) {
     for (let i = 0; i <= days; i++) {
       const day = subDays(today, i);
       const dayCompleted = recentCompleted.filter(
-        (item) => item.completed_at && isSameDay(parseISO(item.completed_at), day)
+        (item) => item.body.recurrence?.last_completed && isSameDay(parseISO(item.body.recurrence.last_completed), day)
       );
 
       if (dayCompleted.length > 0) {
@@ -151,15 +159,15 @@ export function useAnalytics(days: number = 30) {
   // Summary stats
   const summary = useMemo(() => {
     const totalCompleted = recentCompleted.length;
-    const totalActive = items.filter((i) => !i.completed && !i.archived).length;
+    const totalActive = items.filter((i) => i.status === 'active').length;
     const totalReflections = items.filter(
-      (i) => (i.type === 'reflection' || i.type === 'journal') && !i.archived
+      (i) => (i.type === 'reflection' || i.type === 'log') && i.status !== 'archived'
     ).length;
-    const choresDone = recentCompleted.filter((i) => i.is_chore).length;
+    const choresDone = recentCompleted.filter((i) => i.tags.includes('chore')).length;
 
     const allEmotions: Emotion[] = [];
     for (const item of items) {
-      if (item.emotion_after) allEmotions.push(item.emotion_after);
+      if (item.body.soul?.emotion_after) allEmotions.push(item.body.soul.emotion_after as Emotion);
     }
     const emotionCounts = new Map<Emotion, number>();
     for (const e of allEmotions) {
@@ -184,12 +192,12 @@ export function useAnalytics(days: number = 30) {
   const insights = useMemo((): Insight[] => generateInsights(items), [items]);
 
   const emotionProductivity = useMemo(
-    (): EmotionProductivity[] => computeEmotionProductivity(items.filter((i) => !i.archived)),
+    (): EmotionProductivity[] => computeEmotionProductivity(items.filter((i) => i.status !== 'archived')),
     [items]
   );
 
   const periodProductivity = useMemo(
-    (): PeriodProductivity[] => computePeriodProductivity(items.filter((i) => !i.archived)),
+    (): PeriodProductivity[] => computePeriodProductivity(items.filter((i) => i.status !== 'archived')),
     [items]
   );
 

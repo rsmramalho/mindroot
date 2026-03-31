@@ -31,13 +31,14 @@ export default function DayDetail({
 }: DayDetailProps) {
   const dayItems = useMemo(() => {
     return items.filter((i) => {
-      if (!i.due_date) return false;
-      return isSameDay(new Date(i.due_date), date);
+      const dueDate = i.body.operations?.due_date;
+      if (!dueDate) return false;
+      return isSameDay(new Date(dueDate), date);
     });
   }, [items, date]);
 
-  const pending = dayItems.filter((i) => !i.completed);
-  const done = dayItems.filter((i) => i.completed);
+  const pending = dayItems.filter((i) => i.status !== 'completed');
+  const done = dayItems.filter((i) => i.status === 'completed');
 
   const today = isToday(date);
   const dateLabel = today

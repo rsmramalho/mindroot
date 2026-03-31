@@ -166,9 +166,9 @@ export default function CommandPalette() {
         action: () => {
           if (r.item.type === 'project') {
             navigate('projects');
-          } else if (r.item.type === 'journal' || r.item.type === 'reflection') {
+          } else if (r.item.type === 'log' || r.item.type === 'reflection') {
             navigate('journal');
-          } else if (r.item.due_date) {
+          } else if (r.item.body.operations?.due_date) {
             navigate('calendar');
           } else {
             navigate('home');
@@ -516,10 +516,9 @@ function getItemIcon(item: AtomItem): string {
     case 'task': return '·';
     case 'habit': return '↻';
     case 'ritual': return '◎';
-    case 'chore': return '◆';
     case 'note': return '○';
     case 'reflection': return '◇';
-    case 'journal': return '▪';
+    case 'log': return '▪';
     default: return '·';
   }
 }
@@ -531,9 +530,9 @@ function buildSubtitle(item: AtomItem, matchField: string): string {
     const m = MODULES.find((mod) => mod.key === item.module);
     if (m) parts.push(m.label);
   }
-  if (item.emotion_before) parts.push(item.emotion_before);
+  if (item.body.soul?.emotion_before) parts.push(item.body.soul.emotion_before);
   if (item.tags?.length) parts.push(item.tags.map((t) => `#${t}`).join(' '));
-  if (matchField === 'description') parts.push('(descricao)');
+  if (matchField === 'notes') parts.push('(notas)');
 
   return parts.join(' · ');
 }

@@ -5,10 +5,9 @@
 
 
 const PRIORITY_CONFIG: Record<string, { color: string; label: string; pulse?: boolean }> = {
-  urgente:    { color: '#e85d5d', label: 'Urgente', pulse: true },
-  importante: { color: '#e8a84c', label: 'Importante' },
-  manutencao: { color: '#8a9e7a', label: 'Manutenção' },
-  futuro:     { color: '#6b7280', label: 'Futuro' },
+  high:   { color: '#d4856a', label: 'Alta', pulse: true },
+  medium: { color: '#c4a882', label: 'Média' },
+  low:    { color: '#8a9e7a', label: 'Baixa' },
 };
 
 interface PriorityDotProps {
