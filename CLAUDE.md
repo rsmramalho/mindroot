@@ -6,14 +6,15 @@ MindRoot is NOT a separate product — it is the UI layer for Atom OS (one verte
 
 ## Version
 
-v1.0.0-alpha.26 — Full migration to Atom Engine Schema v2 (Genesis v5.0.1).
+v1.0.0-alpha.27 — Phase 4: Service Layer + FSM Runtime (Genesis v5.0.1).
 
-Branch `ui-v2` has Phases 0-3 implemented:
+Branch `ui-v2` has Phases 0-4 implemented:
 - **Phase 0**: Design system tokens + 6 atom components
 - **Phase 1**: Home page (SoulCard, WrapBanner)
 - **Phase 2**: Pipeline + Triage (7-stage funnel)
 - **Phase 3**: Wrap + FSM engines
-- **Phase 4-5**: Pendente (specs no atom-engine-core)
+- **Phase 4**: Service layer + FSM runtime (connects UI to Supabase)
+- **Phase 5+**: Pendente (specs no atom-engine-core)
 
 ## Relation with atom-engine-core
 
@@ -117,21 +118,21 @@ supabase/        # Migrations, edge functions, seeds
 - shell/ (3): AppShell, BottomNav, TopBar
 - soul/ (4): EmotionPicker, CheckInPrompt, PostCheckIn, SoulPulse
 
-## Hooks (11)
+## Hooks (14)
 
-useAnalytics, useAuth, useItemMutations, useItems, useJournal, useNotifications, useOfflineSync, usePWA, useProject, useRitual, useSoul
+useAnalytics, useAuth, useItemMutations, useItems, useJournal, useNotifications, useOfflineSync, usePWA, usePipeline, useProject, useRealtime, useRitual, useSoul, useWrap
 
-## Services (7)
+## Services (11)
 
-supabase, item-service (itemService + connectionService + eventService), auth-service, ai-service, notification-service, push-service, share-service
+supabase, item-service (itemService + connectionService + eventService), auth-service, ai-service, notification-service, push-service, share-service, fsm-service (FSM runtime + Supabase RPCs), pipeline-service (lifecycle orchestrator), wrap-service (wrap persistence + collection), audit-service (Supabase view queries)
 
 ## Engine (10)
 
 parsing (natural input → structured data), soul (check-in triggers, emotion shift), dashboard-filters, recurrence (virtual reset, period detection, streak), offline-queue (IndexedDB queue, compaction, conflict resolution), insights (emotion-productivity correlation, period/weekday patterns, natural language suggestions), search (query parsing with filter prefixes, relevance scoring, full-text search), ai-suggestions (7 pattern detectors: procrastination, emotion timing, overdue cluster, energy overload, positive streak, period emotion risk, module imbalance), export (journal→Markdown, all data→JSON backup, weekly auto-backup scheduling), theme (dark/light colors, CSS variable generation, module color customization, dashboard section ordering)
 
-## Stores (7)
+## Stores (8)
 
-app-store (navigation, filters, soul state, user), ritual-store (period, check-in, reflection), onboarding-store (welcome flow, tooltip flags), toast-store (notification queue, auto-dismiss, undo), notification-store (push prefs, permission state, overdue tracking), offline-store (connectivity, pending count, sync state), theme-store (dark/light mode, custom module colors, dashboard section order, localStorage persistence)
+app-store (navigation, filters, soul state, user), ritual-store (period, check-in, reflection), onboarding-store (welcome flow, tooltip flags), toast-store (notification queue, auto-dismiss, undo), notification-store (push prefs, permission state, overdue tracking), offline-store (connectivity, pending count, sync state), theme-store (dark/light mode, custom module colors, dashboard section order, localStorage persistence), wrap-store (wrap session state, multi-step wizard)
 
 ## Edge Function — parse-input
 
@@ -217,6 +218,7 @@ VITE_SUPABASE_ANON_KEY=...
 | alpha.25.1 | 11/03/2026 | Landing polish — hero spacing, botão #b8976e, scroll hint refinement, remove hover re-renders (467 tests) |
 | alpha.25.2 | 11/03/2026 | Border-radius botão 4px, scroll hint visível (467 tests) |
 | alpha.26 | 29/03/2026 | **BREAKING: Full migration to Atom Engine Schema v2 (Genesis v5.0.1).** Types rewritten (AtomItem, 23 AtomTypes, 8 modules, state machine). Service layer rewritten (itemService + connectionService + eventService). 65 files migrated, 707→0 TS errors. Supabase Schema v2 deployed (3 tables, enums, triggers, RLS). |
+| alpha.27 | 01/04/2026 | **Phase 4: Service Layer + FSM Runtime.** 4 new services (fsm-service, pipeline-service, wrap-service, audit-service). FSM runtime with gate validation + Supabase RPCs (morph, decay, propagate, commit). Pipeline orchestrator (capture→commit lifecycle). Wrap service (collect + persist). Audit service (Supabase views). wrap-store (Zustand). 3 new hooks (usePipeline, useWrap, useRealtime). Realtime subscriptions in App. |
 
 ## Google OAuth Setup (manual)
 

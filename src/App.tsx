@@ -31,6 +31,7 @@ import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { ErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { useOnboardingStore } from '@/store/onboarding-store';
 import { useThemeStore } from '@/store/theme-store';
+import { useRealtime } from '@/hooks/useRealtime';
 import { applyThemeToDom } from '@/engine/theme';
 
 const queryClient = new QueryClient({
@@ -90,6 +91,7 @@ function PageRouter() {
 
 function AuthenticatedApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  useRealtime();
 
   return (
     <AppShell onOpenSettings={() => setSettingsOpen(true)}>
