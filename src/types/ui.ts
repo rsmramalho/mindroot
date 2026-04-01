@@ -1,7 +1,7 @@
 // types/ui.ts — UI state types
 import type { AtomModule, Priority, AtomType, RitualSlot } from './item';
 
-export type AppPage = 'home' | 'inbox' | 'projects' | 'project-detail' | 'ritual' | 'journal' | 'calendar' | 'analytics';
+export type AppPage = 'home' | 'inbox' | 'projects' | 'project-detail' | 'ritual' | 'journal' | 'calendar' | 'analytics' | 'pipeline' | 'wrap';
 
 export interface AppFilters {
   module: AtomModule | null;

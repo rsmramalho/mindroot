@@ -21,6 +21,8 @@ const CalendarPage = lazy(() => import('@/pages/Calendar').then(m => ({ default:
 const RitualPage = lazy(() => import('@/pages/Ritual').then(m => ({ default: m.RitualPage })));
 const JournalPage = lazy(() => import('@/pages/Journal').then(m => ({ default: m.JournalPage })));
 const AnalyticsPage = lazy(() => import('@/pages/Analytics').then(m => ({ default: m.AnalyticsPage })));
+const PipelinePage = lazy(() => import('@/pages/Pipeline').then(m => ({ default: m.PipelinePage })));
+const WrapPage = lazy(() => import('@/pages/Wrap').then(m => ({ default: m.WrapPage })));
 
 // Global components
 import CommandPalette from '@/components/shared/CommandPalette';
@@ -60,6 +62,10 @@ function PageRouter() {
         return <JournalPage />;
       case 'analytics':
         return <AnalyticsPage />;
+      case 'pipeline':
+        return <PipelinePage />;
+      case 'wrap':
+        return <WrapPage />;
       default:
         return <HomePage />;
     }
